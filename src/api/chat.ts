@@ -1,4 +1,9 @@
-import { RequestGetChats, RequestSend, ResponseGetChats, ResponseSend } from "@/pages/api/chatgpt/chat";
+import {
+  RequestGetChats,
+  RequestSend,
+  ResponseGetChats,
+  ResponseSend,
+} from "@/pages/api/chatgpt/chat";
 import nodeFetch from "node-fetch";
 
 export async function getChatsByConversationId(conversationId: number) {
@@ -23,7 +28,11 @@ export async function getChatsByConversationId(conversationId: number) {
   return data;
 }
 
-export async function sendMessage(conversageId: number, message: string, name?: string) {
+export async function sendMessage(
+  conversageId: number,
+  message: string,
+  name?: string
+) {
   const response = await nodeFetch("/api/chatgpt/chat", {
     method: "POST",
     body: JSON.stringify({
@@ -51,7 +60,11 @@ export async function sendMessage(conversageId: number, message: string, name?: 
   return data;
 }
 
-export async function sendMsgWithStreamRes(conversageId: number, message: string, name?: string) {
+export async function sendMsgWithStreamRes(
+  conversageId: number,
+  message: string,
+  name?: string
+) {
   const response = await fetch("/api/chatgpt/stream", {
     method: "POST",
     headers: { Accept: "text/event-stream" },

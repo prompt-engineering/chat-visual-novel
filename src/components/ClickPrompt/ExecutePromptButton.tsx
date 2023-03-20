@@ -47,13 +47,16 @@ function ExecutePromptButton(props: ExecButtonProps) {
 
     let conversationId = props.conversationId;
     if (!props.conversationId) {
-      const conversation: ResponseCreateConversation = await createConversation();
+      const conversation: ResponseCreateConversation =
+        await createConversation();
       if (!conversation) {
         return;
       }
 
       conversationId = conversation.id as number;
-      props.updateConversationId ? props.updateConversationId(conversationId) : null;
+      props.updateConversationId
+        ? props.updateConversationId(conversationId)
+        : null;
     }
 
     if (conversationId) {
@@ -87,14 +90,15 @@ function ExecutePromptButton(props: ExecButtonProps) {
   return (
     <>
       <StyledPromptButton>
-        <Button colorScheme='twitter' className='bg-blue' onClick={handleClick}>
+        <Button colorScheme="twitter" className="bg-blue" onClick={handleClick}>
           {props.children}
           {!isLoading && <Text>Prompt</Text>}
-          {isLoading && <BeatLoader size={8} color='black' />}
+          {isLoading && <BeatLoader size={8} color="black" />}
         </Button>
         <ClickPromptBird />
       </StyledPromptButton>
-      {!hasLogin && LoggingDrawer(isOpen, handleClose, hasLogin, props, updateLoginStatus)}
+      {!hasLogin &&
+        LoggingDrawer(isOpen, handleClose, hasLogin, props, updateLoginStatus)}
     </>
   );
 }

@@ -22,7 +22,11 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
 }
 
-export default function Mermaid({ graphDefinition }: { graphDefinition: string }) {
+export default function Mermaid({
+  graphDefinition,
+}: {
+  graphDefinition: string;
+}) {
   const [instance, setInstance] = useState<SvgPanZoom.Instance | null>(null);
   const enableZoom = useCallback(() => {
     instance?.enablePan();
@@ -106,10 +110,11 @@ export default function Mermaid({ graphDefinition }: { graphDefinition: string }
     };
   }, [enableZoom, disableZoom]);
 
-  if (hasError || !graphDefinition) return <code className={"mermaid"}>{graphDefinition}</code>;
+  if (hasError || !graphDefinition)
+    return <code className={"mermaid"}>{graphDefinition}</code>;
   return (
     <>
-      <Flex justifyContent='flex-end' className='text-gray-400 font-bold'>
+      <Flex justifyContent="flex-end" className="text-gray-400 font-bold">
         * hold space to pan & zoom
       </Flex>
       <div

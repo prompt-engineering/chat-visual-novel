@@ -1,7 +1,13 @@
 "use client";
 
 import { SITE_LOCALE_COOKIE } from "@/configs/constants";
-import { Box, Menu, MenuButton, MenuList, MenuItem } from "@/components/ChakraUI";
+import {
+  Box,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+} from "@/components/ChakraUI";
 import { ChevronDownIcon } from "@/components/ChakraUI/icons";
 
 const options = [
@@ -28,7 +34,7 @@ export default function LocaleSwitcher({ locale }: { locale: string }) {
   }
 
   return (
-    <div className=' flex justify-around select-none'>
+    <div className=" flex justify-around select-none">
       <Menu>
         <MenuButton mr={4}>
           {locale === "zh-CN" ? "中文" : "English"}
@@ -41,7 +47,11 @@ export default function LocaleSwitcher({ locale }: { locale: string }) {
               key={child.value}
               onClick={() => (child.value === "zh-CN" ? setZh() : setEn())}
             >
-              <Box mr={4} className={`cursor-pointer ${classZh}`} color={child.value === locale ? "#108EE9" : "black"}>
+              <Box
+                mr={4}
+                className={`cursor-pointer ${classZh}`}
+                color={child.value === locale ? "#108EE9" : "black"}
+              >
                 {child.label}
               </Box>
             </MenuItem>

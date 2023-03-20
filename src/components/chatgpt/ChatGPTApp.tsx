@@ -9,7 +9,11 @@ type ChatGPTAppProps = {
   updateLoginStatus?: (loggedIn: boolean) => void;
   initMessage?: string;
 };
-export const ChatGPTApp = ({ loggedIn, initMessage, updateLoginStatus }: ChatGPTAppProps) => {
+export const ChatGPTApp = ({
+  loggedIn,
+  initMessage,
+  updateLoginStatus,
+}: ChatGPTAppProps) => {
   const [isLoggedIn, setIsLoggedIn] = useState(loggedIn ?? false);
 
   useEffect(() => {

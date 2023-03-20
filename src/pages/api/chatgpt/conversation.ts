@@ -12,13 +12,17 @@ export type RequestCreateConversation = {
   action: "create_conversation";
   name: string;
 };
-export type ResponseCreateConversation = Awaited<ReturnType<typeof createConversation>>;
+export type ResponseCreateConversation = Awaited<
+  ReturnType<typeof createConversation>
+>;
 
 export type RequestDeleteConversation = {
   action: "delete_conversation";
   conversation_id: number;
 };
-export type ResponseDeleteConversation = Awaited<ReturnType<typeof deleteConversation>>;
+export type ResponseDeleteConversation = Awaited<
+  ReturnType<typeof deleteConversation>
+>;
 
 export type RequestDeleteAllConversation = {
   action: "delete_all_conversations";
@@ -31,7 +35,9 @@ export type ResponseDeleteAllConversation = {
 export type RequestGetConversations = {
   action: "get_conversations";
 };
-export type ResponseGetConversations = Awaited<ReturnType<typeof getAllConversionsByUserId>>;
+export type ResponseGetConversations = Awaited<
+  ReturnType<typeof getAllConversionsByUserId>
+>;
 
 // change name
 export type RequestChangeConversationName = {
@@ -39,7 +45,9 @@ export type RequestChangeConversationName = {
   conversation_id: number;
   name: string;
 };
-export type ResponseChangeConversationName = Awaited<ReturnType<typeof changeConversationName>>;
+export type ResponseChangeConversationName = Awaited<
+  ReturnType<typeof changeConversationName>
+>;
 
 type RequestType =
   | RequestCreateConversation
@@ -59,7 +67,8 @@ const hander: NextApiHandler = async (req, res) => {
     return;
   }
 
-  const body: RequestType = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+  const body: RequestType =
+    typeof req.body === "string" ? JSON.parse(req.body) : req.body;
   switch (body.action) {
     case "create_conversation": {
       const { name } = body;

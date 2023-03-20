@@ -15,7 +15,7 @@
     "postinstall": "npm run prepare:data",
     "prepare:env": "npx vercel link && npx vercel env pull .env.local",
     "prepare:data": "",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch"
   },
   "dependencies": {

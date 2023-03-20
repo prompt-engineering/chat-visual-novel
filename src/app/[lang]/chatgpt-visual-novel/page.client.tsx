@@ -1,7 +1,24 @@
 "use client";
 
-import { useState, MouseEventHandler, useMemo, ChangeEventHandler } from "react";
-import { Box, Card, CardBody, CardFooter, CardHeader, Flex, Text, Link, Stack, Select, Image } from "@chakra-ui/react";
+import {
+  useState,
+  MouseEventHandler,
+  useMemo,
+  ChangeEventHandler,
+} from "react";
+import {
+  Box,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  Flex,
+  Text,
+  Link,
+  Stack,
+  Select,
+  Image,
+} from "@chakra-ui/react";
 import { ArrowDownIcon } from "@chakra-ui/icons";
 import assets from "@/assets/assets.json";
 import { upperFirst } from "lodash-es";
@@ -28,24 +45,33 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const genres = ["romance", "fantasy", "horror", "sci-fi", "crime"];
   const [genre, setGenre] = useState(dict[genres[0]]);
   const [scene, setScene] = useState({} as Scene);
-  const [conversationId, setConversationId] = useState(undefined as number | undefined);
-  const player = assets.player as {[key: string]: string};
-  const girls = assets.girls as {[key: string]: string}[];
-  const places = assets.places as {[key: string]: string};
-  const prompt = `${dict["prompt_start"]}${genre}${dict["prompt_after_story_genre"]} ${girls.length} ${
+  const [conversationId, setConversationId] = useState(
+    undefined as number | undefined
+  );
+  const player = assets.player as { [key: string]: string };
+  const girls = assets.girls as { [key: string]: string }[];
+  const places = assets.places as { [key: string]: string };
+  const prompt = `${dict["prompt_start"]}${genre}${
+    dict["prompt_after_story_genre"]
+  } ${girls.length} ${
     dict["prompt_after_number_of_girls"]
   }\n{speaker: "", girls: [""], story: [{"speaker": "", "dialogue": "", "mood": "", "location": ""}]}\n${
     dict["prompt_follow_rules"]
-  } ${Object.keys(girls[0]).join(", ")}\n${dict["prompt_places"]} ${Object.keys(places).join(", ")}\n${
-    dict["prompt_end"]
-  }`;
+  } ${Object.keys(girls[0]).join(", ")}\n${dict["prompt_places"]} ${Object.keys(
+    places
+  ).join(", ")}\n${dict["prompt_end"]}`;
   // Using only English for the continuing prompt as ChatGPT does not follow correctly with Chinese prompt
-  const promptContinue = "Please continue on the previous story and remove the previous dialogues from the JSON.";
+  const promptContinue =
+    "Please continue on the previous story and remove the previous dialogues from the JSON.";
   const [step, setStep] = useState(0);
-  const [characterMap, setCharacterMap] = useState({} as { [key: string]: number });
+  const [characterMap, setCharacterMap] = useState(
+    {} as { [key: string]: number }
+  );
 
   const handleGenreChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
-    setGenre(genres.indexOf(e.target.value) ? dict[e.target.value] : dict[genres[0]]);
+    setGenre(
+      genres.indexOf(e.target.value) ? dict[e.target.value] : dict[genres[0]]
+    );
   };
 
   const handleStoryNextStep: MouseEventHandler = (e) => {
@@ -62,7 +88,10 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
         for (const girlIndex in newScene.girls) {
           const girl = newScene.girls[girlIndex].toLowerCase();
           const girlCount = Object.keys(newCharacterMap).length;
-          if (!(girl in newCharacterMap) && Object.keys(newCharacterMap).length < girls.length) {
+          if (
+            !(girl in newCharacterMap) &&
+            Object.keys(newCharacterMap).length < girls.length
+          ) {
             newCharacterMap[girl] = girlCount;
           }
         }
@@ -87,7 +116,8 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     const speaker = scene.story[step].speaker.toLowerCase();
     if (speaker == scene.speaker.toLowerCase() || speaker == "narrator")
       return player[scene.story[step].mood.toLowerCase()];
-    if (speaker in characterMap) return girls[characterMap[speaker]][scene.story[step].mood.toLowerCase()];
+    if (speaker in characterMap)
+      return girls[characterMap[speaker]][scene.story[step].mood.toLowerCase()];
   }, [step, scene, characterMap, girls, player]);
 
   return (
@@ -104,20 +134,20 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
               ))}
             </Select>
           </CardHeader>
-          <CardBody maxH='320px' overflow='auto'>
+          <CardBody maxH="320px" overflow="auto">
             <Stack>
               <SimpleMarkdown content={prompt} />
             </Stack>
           </CardBody>
           <CardFooter>
-            <Flex w='90%' flexGrow={"column"} justifyContent='space-between'>
+            <Flex w="90%" flexGrow={"column"} justifyContent="space-between">
               <Box>
                 <CopyComponent value={prompt} />
               </Box>
               <Box>
                 <ExecutePromptButton
                   text={prompt}
-                  name='promptBtn'
+                  name="promptBtn"
                   handleResponse={handleResponse}
                   conversationId={conversationId}
                   updateConversationId={updateConversationId}
@@ -129,11 +159,22 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
       )}
       {scene && scene.speaker && (
         <Box
-          style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", cursor: "pointer" }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            cursor: "pointer",
+          }}
           onClick={handleStoryNextStep}
         >
           <Image
-            src={scene.story[step].location in places ? places[scene.story[step].location] : places["garden"]}
+            src={
+              scene.story[step].location in places
+                ? places[scene.story[step].location]
+                : places["garden"]
+            }
             alt={scene.story[step].location}
             style={{
               position: "absolute",
@@ -160,7 +201,13 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             <Image
               src={character ?? ""}
               alt={scene.story[step].speaker}
-              style={{ position: "absolute", left: "35%", bottom: "100%", width: "30%", minWidth: "256px" }}
+              style={{
+                position: "absolute",
+                left: "35%",
+                bottom: "100%",
+                width: "30%",
+                minWidth: "256px",
+              }}
             />
             <Box
               style={{
@@ -192,10 +239,16 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                 }}
               />
             ) : (
-              <Box style={{ position: "absolute", right: "1.6rem", bottom: "0.6rem" }}>
+              <Box
+                style={{
+                  position: "absolute",
+                  right: "1.6rem",
+                  bottom: "0.6rem",
+                }}
+              >
                 <ExecutePromptButton
                   text={promptContinue}
-                  name='promptContinueBtn'
+                  name="promptContinueBtn"
                   handleResponse={handleResponse}
                   conversationId={conversationId}
                   updateConversationId={updateConversationId}
@@ -203,14 +256,26 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
               </Box>
             )}
             <Text
-              style={{ position: "absolute", left: "1rem", bottom: "0.5rem", fontSize: "0.5rem", color: "lightgray" }}
+              style={{
+                position: "absolute",
+                left: "1rem",
+                bottom: "0.5rem",
+                fontSize: "0.5rem",
+                color: "lightgray",
+              }}
             >
               {dict["sd_note_prefix"]}
-              <Link href='https://github.com/CompVis/stable-diffusion' isExternal>
+              <Link
+                href="https://github.com/CompVis/stable-diffusion"
+                isExternal
+              >
                 Stable Diffusion
               </Link>
               {dict["sd_note_model"]}
-              <Link href='https://huggingface.co/WarriorMama777/OrangeMixs/tree/main/Models/AbyssOrangeMix3' isExternal>
+              <Link
+                href="https://huggingface.co/WarriorMama777/OrangeMixs/tree/main/Models/AbyssOrangeMix3"
+                isExternal
+              >
                 AbyssOrangeMix3
               </Link>
             </Text>

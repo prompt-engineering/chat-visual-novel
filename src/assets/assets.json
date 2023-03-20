@@ -1,38 +1,38 @@
 {
-    "player": {
-        "neutral": "https://prompt-engineering.github.io/stable-diffusion-preview/00144-1619487309.png",
-        "happy": "https://prompt-engineering.github.io/stable-diffusion-preview/00089-1619487309.png",
-        "sad": "https://prompt-engineering.github.io/stable-diffusion-preview/00091-1619487309.png",
-        "suprised": "https://prompt-engineering.github.io/stable-diffusion-preview/00093-1619487309.png",
-        "closed_eyes": "https://prompt-engineering.github.io/stable-diffusion-preview/00095-1619487309.png"
+  "player": {
+    "neutral": "https://prompt-engineering.github.io/stable-diffusion-preview/00144-1619487309.png",
+    "happy": "https://prompt-engineering.github.io/stable-diffusion-preview/00089-1619487309.png",
+    "sad": "https://prompt-engineering.github.io/stable-diffusion-preview/00091-1619487309.png",
+    "suprised": "https://prompt-engineering.github.io/stable-diffusion-preview/00093-1619487309.png",
+    "closed_eyes": "https://prompt-engineering.github.io/stable-diffusion-preview/00095-1619487309.png"
+  },
+  "girls": [
+    {
+      "neutral": "https://prompt-engineering.github.io/stable-diffusion-preview/00055-3317647877.png",
+      "happy": "https://prompt-engineering.github.io/stable-diffusion-preview/00057-3317647877.png",
+      "sad": "https://prompt-engineering.github.io/stable-diffusion-preview/00059-3317647877.png",
+      "closed_eyes": "https://prompt-engineering.github.io/stable-diffusion-preview/00061-3317647877.png",
+      "suprised": "https://prompt-engineering.github.io/stable-diffusion-preview/00063-3317647877.png"
     },
-    "girls": [
-        {
-            "neutral": "https://prompt-engineering.github.io/stable-diffusion-preview/00055-3317647877.png",
-            "happy": "https://prompt-engineering.github.io/stable-diffusion-preview/00057-3317647877.png",
-            "sad": "https://prompt-engineering.github.io/stable-diffusion-preview/00059-3317647877.png",
-            "closed_eyes": "https://prompt-engineering.github.io/stable-diffusion-preview/00061-3317647877.png",
-            "suprised": "https://prompt-engineering.github.io/stable-diffusion-preview/00063-3317647877.png"
-        },
-        {
-            "neutral": "https://prompt-engineering.github.io/stable-diffusion-preview/00063-3415190727.png",
-            "happy": "https://prompt-engineering.github.io/stable-diffusion-preview/00065-3415190727.png",
-            "sad": "https://prompt-engineering.github.io/stable-diffusion-preview/00067-3415190727.png",
-            "suprised": "https://prompt-engineering.github.io/stable-diffusion-preview/00071-3415190727.png",
-            "closed_eyes": "https://prompt-engineering.github.io/stable-diffusion-preview/00073-3415190727.png"
-        },
-        {
-            "neutral": "https://prompt-engineering.github.io/stable-diffusion-preview/00073-645522131.png",
-            "happy": "https://prompt-engineering.github.io/stable-diffusion-preview/00075-645522131.png",
-            "sad": "https://prompt-engineering.github.io/stable-diffusion-preview/00077-645522131.png",
-            "suprised": "https://prompt-engineering.github.io/stable-diffusion-preview/00079-645522131.png",
-            "closed_eyes": "https://prompt-engineering.github.io/stable-diffusion-preview/00081-645522131.png"
-        }
-    ],
-    "places": {
-        "room": "https://prompt-engineering.github.io/stable-diffusion-preview/00115-1693129910.png",
-        "lobby": "https://prompt-engineering.github.io/stable-diffusion-preview/00116-767133290.png",
-        "garden": "https://prompt-engineering.github.io/stable-diffusion-preview/00117-1865753899.png",
-        "restaurant": "https://prompt-engineering.github.io/stable-diffusion-preview/00146-2156326714.png"
+    {
+      "neutral": "https://prompt-engineering.github.io/stable-diffusion-preview/00063-3415190727.png",
+      "happy": "https://prompt-engineering.github.io/stable-diffusion-preview/00065-3415190727.png",
+      "sad": "https://prompt-engineering.github.io/stable-diffusion-preview/00067-3415190727.png",
+      "suprised": "https://prompt-engineering.github.io/stable-diffusion-preview/00071-3415190727.png",
+      "closed_eyes": "https://prompt-engineering.github.io/stable-diffusion-preview/00073-3415190727.png"
+    },
+    {
+      "neutral": "https://prompt-engineering.github.io/stable-diffusion-preview/00073-645522131.png",
+      "happy": "https://prompt-engineering.github.io/stable-diffusion-preview/00075-645522131.png",
+      "sad": "https://prompt-engineering.github.io/stable-diffusion-preview/00077-645522131.png",
+      "suprised": "https://prompt-engineering.github.io/stable-diffusion-preview/00079-645522131.png",
+      "closed_eyes": "https://prompt-engineering.github.io/stable-diffusion-preview/00081-645522131.png"
     }
+  ],
+  "places": {
+    "room": "https://prompt-engineering.github.io/stable-diffusion-preview/00115-1693129910.png",
+    "lobby": "https://prompt-engineering.github.io/stable-diffusion-preview/00116-767133290.png",
+    "garden": "https://prompt-engineering.github.io/stable-diffusion-preview/00117-1865753899.png",
+    "restaurant": "https://prompt-engineering.github.io/stable-diffusion-preview/00146-2156326714.png"
+  }
 }

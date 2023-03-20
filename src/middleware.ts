@@ -1,5 +1,11 @@
 import { NextMiddleware, NextResponse } from "next/server";
-import { SupportedLocales, getLocale, replaceRouteLocale, getLocaleFromPath, SupportedLocale } from "@/i18n";
+import {
+  SupportedLocales,
+  getLocale,
+  replaceRouteLocale,
+  getLocaleFromPath,
+  SupportedLocale,
+} from "@/i18n";
 import {
   SITE_INTERNAL_HEADER_LOCALE,
   SITE_INTERNAL_HEADER_PATHNAME,
@@ -11,7 +17,7 @@ export const middleware: NextMiddleware = (request) => {
   // Check if there is any supported locale in the pathname
   const pathname = request.nextUrl.pathname;
   const pathnameIsMissingLocale = SupportedLocales.every(
-    (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`,
+    (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
   );
 
   let locale = getLocale(request.headers);
@@ -26,9 +32,13 @@ export const middleware: NextMiddleware = (request) => {
   if (pathnameIsMissingLocale) {
     // e.g. incoming request is /products
     // The new URL is now /en-US/products
-    return NextResponse.redirect(new URL(`/${locale}/${pathname}`, request.url));
+    return NextResponse.redirect(
+      new URL(`/${locale}/${pathname}`, request.url)
+    );
   } else if (getLocaleFromPath(pathname) !== locale) {
-    return NextResponse.redirect(new URL(replaceRouteLocale(pathname, locale), request.url));
+    return NextResponse.redirect(
+      new URL(replaceRouteLocale(pathname, locale), request.url)
+    );
   }
 
   // ref: https://github.com/vercel/next.js/issues/43704#issuecomment-1411186664

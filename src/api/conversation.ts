@@ -30,7 +30,10 @@ export async function createConversation(name?: string) {
   return data;
 }
 
-export async function changeConversationName(conversationId: number, name: string) {
+export async function changeConversationName(
+  conversationId: number,
+  name: string
+) {
   const response = await fetch("/api/chatgpt/conversation", {
     method: "POST",
     body: JSON.stringify({

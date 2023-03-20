@@ -25,7 +25,7 @@ const handler: NextApiHandler = async (req, res) => {
       ...acc,
       [key]: value,
     }),
-    {},
+    {}
   );
 
   // ignore body when method is GET

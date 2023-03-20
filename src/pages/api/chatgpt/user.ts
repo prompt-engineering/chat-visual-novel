@@ -20,7 +20,8 @@ const handler: NextApiHandler = async (req, res) => {
   }
 
   const userIdInCookie = req.cookies[SITE_USER_COOKIE];
-  const { key, action } = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+  const { key, action } =
+    typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
   if (!action) {
     res.status(400).json({ error: "No query provided" });
@@ -41,17 +42,25 @@ const handler: NextApiHandler = async (req, res) => {
           });
         }
 
-        res.setHeader("Set-Cookie", `${SITE_USER_COOKIE}=${key_hashed}; Max-Age=3600; HttpOnly; Path=/;`);
+        res.setHeader(
+          "Set-Cookie",
+          `${SITE_USER_COOKIE}=${key_hashed}; Max-Age=3600; HttpOnly; Path=/;`
+        );
         return res.status(200).json({ message: "Logged in" } as Response);
       } else {
         return res.status(400).json({ error: "No key provided" } as Response);
       }
     case "logout":
       if (!userIdInCookie) {
-        return res.status(200).json({ error: "You're not logged in yet!" } as Response);
+        return res
+          .status(200)
+          .json({ error: "You're not logged in yet!" } as Response);
       }
 
-      res.setHeader("Set-Cookie", `${SITE_USER_COOKIE}=; Max-Age=0; HttpOnly; Path=/;`);
+      res.setHeader(
+        "Set-Cookie",
+        `${SITE_USER_COOKIE}=; Max-Age=0; HttpOnly; Path=/;`
+      );
       return res.status(200).json({ message: "Logged out" } as Response);
     default:
       return res.status(400).json({ error: "Unknown actions" } as Response);

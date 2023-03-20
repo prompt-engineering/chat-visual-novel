@@ -12,7 +12,12 @@ type CopyProps = {
   children?: React.ReactNode;
 };
 
-function CopyComponent({ value, className = "", children, boxSize = 8 }: CopyProps) {
+function CopyComponent({
+  value,
+  className = "",
+  children,
+  boxSize = 8,
+}: CopyProps) {
   const toast = useToast();
   return (
     <div className={className}>
@@ -26,9 +31,9 @@ function CopyComponent({ value, className = "", children, boxSize = 8 }: CopyPro
           });
         }}
       >
-        <div className='cursor-pointer flex justify-center'>
+        <div className="cursor-pointer flex justify-center">
           {children ? children : ""}
-          <Tooltip label='复制到剪贴板' aria-label='A tooltip'>
+          <Tooltip label="复制到剪贴板" aria-label="A tooltip">
             <CopyIcon boxSize={boxSize} />
           </Tooltip>
         </div>

@@ -3,7 +3,10 @@ import { getUserByKeyHashed } from "@/storage/planetscale";
 import { SITE_USER_COOKIE } from "@/configs/constants";
 
 export type User = Awaited<ReturnType<typeof getUserByKeyHashed>>;
-export async function getUser(req: NextApiRequest, res: NextApiResponse): Promise<User | null> {
+export async function getUser(
+  req: NextApiRequest,
+  res: NextApiResponse
+): Promise<User | null> {
   const keyHashed = req.cookies[SITE_USER_COOKIE];
   if (!keyHashed) {
     res.status(400).json({ error: "You're not logged in yet!" });
@@ -20,5 +23,8 @@ export async function getUser(req: NextApiRequest, res: NextApiResponse): Promis
 }
 
 export function kickOutUser(res: NextApiResponse) {
-  res.setHeader("Set-Cookie", `${SITE_USER_COOKIE}=; Max-Age=0; HttpOnly; Path=/;`);
+  res.setHeader(
+    "Set-Cookie",
+    `${SITE_USER_COOKIE}=; Max-Age=0; HttpOnly; Path=/;`
+  );
 }

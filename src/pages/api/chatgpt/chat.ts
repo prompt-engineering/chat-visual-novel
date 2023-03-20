@@ -1,8 +1,15 @@
 import { NextApiHandler, NextApiResponse } from "next";
-import type { ChatCompletionRequestMessage, CreateChatCompletionResponse } from "openai";
+import type {
+  ChatCompletionRequestMessage,
+  CreateChatCompletionResponse,
+} from "openai";
 import type { OpenAIApi } from "openai";
 import { decryptKey } from "@/uitls/crypto.util";
-import { createChat, getAllChatsInsideConversation, createConversation } from "@/storage/planetscale";
+import {
+  createChat,
+  getAllChatsInsideConversation,
+  createConversation,
+} from "@/storage/planetscale";
 import { getChatClient } from "@/uitls/openapi.util";
 import { getUser } from "@/uitls/user.util";
 import { CHAT_COMPLETION_CONFIG } from "@/configs/constants";
@@ -12,13 +19,17 @@ export type RequestSend = {
   conversation_id: number;
   messages: ChatCompletionRequestMessage[];
 };
-export type ResponseSend = Awaited<ReturnType<typeof getAllChatsInsideConversation>>;
+export type ResponseSend = Awaited<
+  ReturnType<typeof getAllChatsInsideConversation>
+>;
 
 export type RequestGetChats = {
   action: "get_chats";
   conversation_id: number;
 };
-export type ResponseGetChats = Awaited<ReturnType<typeof getAllChatsInsideConversation>>;
+export type ResponseGetChats = Awaited<
+  ReturnType<typeof getAllChatsInsideConversation>
+>;
 
 type RequestBody = RequestSend | RequestGetChats;
 
@@ -28,10 +39,14 @@ const handler: NextApiHandler = async (req, res) => {
     return;
   }
 
-  const chatClient = await getChatClient(user.key_hashed, decryptKey(user.key_encrypted, user.iv));
+  const chatClient = await getChatClient(
+    user.key_hashed,
+    decryptKey(user.key_encrypted, user.iv)
+  );
 
   if (req.method === "POST" && req.body) {
-    const body: RequestBody = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const body: RequestBody =
+      typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
     switch (body.action) {
       case "send": {
@@ -55,7 +70,12 @@ const handler: NextApiHandler = async (req, res) => {
           client: chatClient,
           conversation_id: conversation_id,
           msgs: chats.map(
-            (it) => ({ role: it.role, content: it.content, name: it.name } as ChatCompletionRequestMessage),
+            (it) =>
+              ({
+                role: it.role,
+                content: it.content,
+                name: it.name,
+              } as ChatCompletionRequestMessage)
           ),
           newMsgs: body.messages,
         });
@@ -70,7 +90,9 @@ const handler: NextApiHandler = async (req, res) => {
       }
 
       default:
-        res.status(400).json(`Not supported action of ${(body as any)?.action}`);
+        res
+          .status(400)
+          .json(`Not supported action of ${(body as any)?.action}`);
         return;
     }
   } else {
@@ -94,7 +116,10 @@ async function sendMsgs({
   newMsgs: ChatCompletionRequestMessage[];
 }) {
   try {
-    const messages = [...msgs, ...newMsgs].map((it) => ({ ...it, name: it.name ?? undefined }));
+    const messages = [...msgs, ...newMsgs].map((it) => ({
+      ...it,
+      name: it.name ?? undefined,
+    }));
     const response = await client.createChatCompletion({
       ...CHAT_COMPLETION_CONFIG,
       messages,
@@ -113,7 +138,9 @@ async function sendMsgs({
     // add response to newMsgs
     messages.push({ ...choices[0].message, name: undefined });
 
-    const needToSave = newMsgs.concat(choices[0].message).map((it) => ({ ...it, conversation_id }));
+    const needToSave = newMsgs
+      .concat(choices[0].message)
+      .map((it) => ({ ...it, conversation_id }));
     // save to database
     const result = await createChat(needToSave);
     if (!result) {
@@ -121,7 +148,9 @@ async function sendMsgs({
       return;
     }
 
-    return res.status(200).json([choices[0].message] as unknown as ResponseSend);
+    return res
+      .status(200)
+      .json([choices[0].message] as unknown as ResponseSend);
   } catch (e: any) {
     let msg = e.message;
     if (e.code === "ETIMEDOUT") {

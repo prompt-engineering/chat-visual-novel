@@ -17,7 +17,7 @@ type SimpleColorProps = {
 
 const colorNameMap: Record<string, string> = colorNameList.reduce(
   (o, { name, hex }) => Object.assign(o, { [name]: hex }),
-  {},
+  {}
 );
 const nearest = nearestColor.from(colorNameMap);
 const hexToRgbString = (hex: string) => {
@@ -31,7 +31,8 @@ function SimpleColorPicker(props: SimpleColorProps) {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
 
   useEffect(() => {
-    const initColor = props.initColor && colorNameMap[props.initColor.replace(/ color$/, "")];
+    const initColor =
+      props.initColor && colorNameMap[props.initColor.replace(/ color$/, "")];
     setColor(initColor ? hexToRgbString(initColor) : defaultColor);
   }, [props.initColor]);
 

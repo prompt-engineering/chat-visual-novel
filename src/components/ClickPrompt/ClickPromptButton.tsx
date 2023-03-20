@@ -6,7 +6,11 @@ import { Button } from "@/components/ChakraUI";
 import { BeatLoader } from "react-spinners";
 import { ClickPromptSmall } from "@/components/CustomIcon";
 import clickPromptLogo from "@/assets/clickprompt-light.svg?url";
-import { CPButtonProps, StyledBird, StyledPromptButton } from "@/components/ClickPrompt/Button.shared";
+import {
+  CPButtonProps,
+  StyledBird,
+  StyledPromptButton,
+} from "@/components/ClickPrompt/Button.shared";
 import { LoggingDrawer } from "@/components/ClickPrompt/LoggingDrawer";
 import * as UserAPI from "@/api/user";
 
@@ -16,7 +20,14 @@ export function ClickPromptBird(props: ClickPromptBirdParams) {
   const width = props.width || 38;
   const height = props.height || 32;
 
-  return <StyledBird src={clickPromptLogo} alt='ClickPrompt Logo' width={width} height={height} />;
+  return (
+    <StyledBird
+      src={clickPromptLogo}
+      alt="ClickPrompt Logo"
+      width={width}
+      height={height}
+    />
+  );
 }
 
 export function ClickPromptButton(props: CPButtonProps) {
@@ -40,10 +51,15 @@ export function ClickPromptButton(props: CPButtonProps) {
   function NormalSize() {
     return (
       <StyledPromptButton>
-        <Button colorScheme='twitter' className='bg-blue' onClick={handleClick} {...props}>
+        <Button
+          colorScheme="twitter"
+          className="bg-blue"
+          onClick={handleClick}
+          {...props}
+        >
           {props.children}
           {!isLoading && <Text>Prompt</Text>}
-          {isLoading && <BeatLoader size={8} color='black' />}
+          {isLoading && <BeatLoader size={8} color="black" />}
         </Button>
         <ClickPromptBird />
       </StyledPromptButton>
@@ -52,9 +68,9 @@ export function ClickPromptButton(props: CPButtonProps) {
 
   function SmallSize() {
     return (
-      <Button variant='unstyled' onClick={handleClick} {...props}>
+      <Button variant="unstyled" onClick={handleClick} {...props}>
         {props.children}
-        <Tooltip label='Execute ChatGPT Prompt' aria-label='A tooltip'>
+        <Tooltip label="Execute ChatGPT Prompt" aria-label="A tooltip">
           <ClickPromptSmall width={32} height={32} />
         </Tooltip>
       </Button>

@@ -3,7 +3,16 @@
 import React from "react";
 import ReactMarkdown, { Components } from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { Code, Divider, Heading, Link, ListItem, OrderedList, Text, UnorderedList } from "@chakra-ui/layout";
+import {
+  Code,
+  Divider,
+  Heading,
+  Link,
+  ListItem,
+  OrderedList,
+  Text,
+  UnorderedList,
+} from "@chakra-ui/layout";
 import { Image } from "@chakra-ui/image";
 import { Checkbox } from "@chakra-ui/checkbox";
 import { Table, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/table";
@@ -46,7 +55,9 @@ type GetCoreProps = {
 };
 
 function getCoreProps(props: GetCoreProps): any {
-  return props["data-sourcepos"] ? { "data-sourcepos": props["data-sourcepos"] } : {};
+  return props["data-sourcepos"]
+    ? { "data-sourcepos": props["data-sourcepos"] }
+    : {};
 }
 
 export const defaults: Defaults = {
@@ -56,19 +67,19 @@ export const defaults: Defaults = {
   },
   em: (props) => {
     const { children } = props;
-    return <Text as='em'>{children}</Text>;
+    return <Text as="em">{children}</Text>;
   },
   blockquote: (props) => {
     const { children } = props;
     return (
-      <Code as='blockquote' p={2}>
+      <Code as="blockquote" p={2}>
         {children}
       </Code>
     );
   },
   del: (props) => {
     const { children } = props;
-    return <Text as='del'>{children}</Text>;
+    return <Text as="del">{children}</Text>;
   },
   hr: (props) => {
     return <Divider />;
@@ -77,7 +88,7 @@ export const defaults: Defaults = {
   img: Image,
   text: (props) => {
     const { children } = props;
-    return <Text as='span'>{children}</Text>;
+    return <Text as="span">{children}</Text>;
   },
   ul: (props) => {
     const { ordered, children, depth } = props;
@@ -90,7 +101,13 @@ export const defaults: Defaults = {
     }
     if (depth === 1) styleType = "circle";
     return (
-      <Element spacing={2} as={ordered ? "ol" : "ul"} styleType={styleType} pl={4} {...attrs}>
+      <Element
+        spacing={2}
+        as={ordered ? "ol" : "ul"}
+        styleType={styleType}
+        pl={4}
+        {...attrs}
+      >
         {children}
       </Element>
     );
@@ -106,7 +123,13 @@ export const defaults: Defaults = {
     }
     if (depth === 1) styleType = "circle";
     return (
-      <Element spacing={2} as={ordered ? "ol" : "ul"} styleType={styleType} pl={4} {...attrs}>
+      <Element
+        spacing={2}
+        as={ordered ? "ol" : "ul"}
+        styleType={styleType}
+        pl={4}
+        {...attrs}
+      >
         {children}
       </Element>
     );
@@ -122,7 +145,10 @@ export const defaults: Defaults = {
       );
     }
     return (
-      <ListItem {...getCoreProps(props)} listStyleType={checked !== null ? "none" : "inherit"}>
+      <ListItem
+        {...getCoreProps(props)}
+        listStyleType={checked !== null ? "none" : "inherit"}
+      >
         {checkbox || children}
       </ListItem>
     );
@@ -131,7 +157,12 @@ export const defaults: Defaults = {
     const { level, children } = props;
     const sizes = ["2xl", "xl", "lg", "md", "sm", "xs"];
     return (
-      <Heading my={4} as={`h${level}`} size={sizes[`${level - 1}`]} {...getCoreProps(props)}>
+      <Heading
+        my={4}
+        as={`h${level}`}
+        size={sizes[`${level - 1}`]}
+        {...getCoreProps(props)}
+      >
         {children}
       </Heading>
     );

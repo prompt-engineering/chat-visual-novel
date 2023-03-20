@@ -11,7 +11,11 @@ import {
   MenuList,
   Spacer,
 } from "@/components/ChakraUI";
-import { ChevronDownIcon, ExternalLinkIcon, HamburgerIcon } from "@/components/ChakraUI/icons";
+import {
+  ChevronDownIcon,
+  ExternalLinkIcon,
+  HamburgerIcon,
+} from "@/components/ChakraUI/icons";
 import Link from "next/link";
 import { GITHUB_URL } from "@/configs/constants";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
@@ -28,12 +32,18 @@ export default async function NavBar({ locale }: { locale: string }) {
   ];
 
   return (
-    <Flex align='center' py='4' pl='20px' pr={{ md: "20px", base: "4px" }} boxShadow='base'>
+    <Flex
+      align="center"
+      py="4"
+      pl="20px"
+      pr={{ md: "20px", base: "4px" }}
+      boxShadow="base"
+    >
       <Flex>
-        <Heading size='md' mr={4}>
+        <Heading size="md" mr={4}>
           <Link href={"/"}>ChatVisualNovel</Link>
         </Heading>
-        <Flex align='center' display={{ md: "flex", base: "none" }}>
+        <Flex align="center" display={{ md: "flex", base: "none" }}>
           {NavList.map((nav: any) => {
             // 如果当前导航项有子菜单，则呈现为下拉菜单
             if (nav?.children) {
@@ -46,7 +56,10 @@ export default async function NavBar({ locale }: { locale: string }) {
                   <MenuList>
                     {nav.children.map((child: any) => (
                       <MenuItem key={child.url} as={Link} href={child.url}>
-                        <Box mr={4} color={pathname === child.url ? "#108EE9" : "black"}>
+                        <Box
+                          mr={4}
+                          color={pathname === child.url ? "#108EE9" : "black"}
+                        >
                           {child.title}
                         </Box>
                       </MenuItem>
@@ -58,7 +71,10 @@ export default async function NavBar({ locale }: { locale: string }) {
               // 否则呈现为单独的链接
               return (
                 <Link key={nav.url} href={nav.url}>
-                  <Box mr={4} color={pathname === nav.url ? "#108EE9" : "black"}>
+                  <Box
+                    mr={4}
+                    color={pathname === nav.url ? "#108EE9" : "black"}
+                  >
                     {nav.title}
                   </Box>
                 </Link>
@@ -69,15 +85,19 @@ export default async function NavBar({ locale }: { locale: string }) {
       </Flex>
       <Spacer />
       <LocaleSwitcher locale={locale} />
-      <NavLink display={{ md: "block", base: "none" }} href={GITHUB_URL} isExternal>
-        GitHub <ExternalLinkIcon mx='2px' />
+      <NavLink
+        display={{ md: "block", base: "none" }}
+        href={GITHUB_URL}
+        isExternal
+      >
+        GitHub <ExternalLinkIcon mx="2px" />
       </NavLink>
       <Menu>
         <MenuButton
           as={IconButton}
-          aria-label='Options'
+          aria-label="Options"
           icon={<HamburgerIcon />}
-          variant='outline'
+          variant="outline"
           display={{ md: "none", base: "block" }}
           mr={4}
         />
@@ -86,7 +106,10 @@ export default async function NavBar({ locale }: { locale: string }) {
             nav.children ? (
               nav.children.map((child: any) => (
                 <MenuItem key={child.url} as={Link} href={child.url}>
-                  <Box mr={4} color={pathname === child.url ? "#108EE9" : "black"}>
+                  <Box
+                    mr={4}
+                    color={pathname === child.url ? "#108EE9" : "black"}
+                  >
                     {child.title}
                   </Box>
                 </MenuItem>
@@ -97,11 +120,11 @@ export default async function NavBar({ locale }: { locale: string }) {
                   {nav.title}
                 </Box>
               </MenuItem>
-            ),
+            )
           )}
           <MenuItem>
             <NavLink href={GITHUB_URL} isExternal>
-              GitHub <ExternalLinkIcon mx='2px' />
+              GitHub <ExternalLinkIcon mx="2px" />
             </NavLink>
           </MenuItem>
         </MenuList>

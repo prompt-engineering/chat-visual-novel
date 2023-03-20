@@ -1,9 +1,16 @@
 import { CHAT_COMPLETION_CONFIG } from "@/configs/constants";
-import { createChat, createConversation, getAllChatsInsideConversation } from "@/storage/planetscale";
+import {
+  createChat,
+  createConversation,
+  getAllChatsInsideConversation,
+} from "@/storage/planetscale";
 import { decryptKey } from "@/uitls/crypto.util";
 import { getChatClient } from "@/uitls/openapi.util";
 import { getUser, User } from "@/uitls/user.edge.util";
-import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from "openai";
+import {
+  ChatCompletionRequestMessage,
+  ChatCompletionRequestMessageRoleEnum,
+} from "openai";
 
 export async function POST(request: Request, response: Response) {
   // TODO mixin?
@@ -29,21 +36,32 @@ export async function POST(request: Request, response: Response) {
       status: 400,
     });
   }
-  const chatClient = await getChatClient(key_hashed, decryptKey(key_encrypted, iv));
+  const chatClient = await getChatClient(
+    key_hashed,
+    decryptKey(key_encrypted, iv)
+  );
   const chats = await getAllChatsInsideConversation(conversation_id);
   const msgs = chats.map(
-    (it) => ({ role: it.role, content: it.content, name: it.name } as ChatCompletionRequestMessage),
+    (it) =>
+      ({
+        role: it.role,
+        content: it.content,
+        name: it.name,
+      } as ChatCompletionRequestMessage)
   );
   const newMsgs = body.messages;
   try {
-    const messages = [...msgs, ...newMsgs].map((it) => ({ ...it, name: it.name ?? undefined }));
+    const messages = [...msgs, ...newMsgs].map((it) => ({
+      ...it,
+      name: it.name ?? undefined,
+    }));
     const response = await chatClient.createChatCompletion(
       {
         ...CHAT_COMPLETION_CONFIG,
         messages,
         stream: true,
       },
-      { responseType: "stream" },
+      { responseType: "stream" }
     );
     if (response.status !== 200) {
       return new Response(JSON.stringify({ error: response.statusText }), {
@@ -75,7 +93,9 @@ export async function POST(request: Request, response: Response) {
             // add response to newMsgs
             const _newMsg = { content: msg, role };
             messages.push({ ..._newMsg, name: undefined });
-            const needToSave = newMsgs.concat(_newMsg).map((it: any) => ({ ...it, conversation_id }));
+            const needToSave = newMsgs
+              .concat(_newMsg)
+              .map((it: any) => ({ ...it, conversation_id }));
             try {
               // save to database
               const result = await createChat(needToSave);
@@ -95,7 +115,11 @@ export async function POST(request: Request, response: Response) {
                 msg += parsed.content;
               }
             } catch (error) {
-              console.error("Could not JSON parse stream message", message, error);
+              console.error(
+                "Could not JSON parse stream message",
+                message,
+                error
+              );
             }
           }
         }

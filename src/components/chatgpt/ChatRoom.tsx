@@ -8,7 +8,10 @@ import content from "@/assets/images/content.png";
 import send from "@/assets/icons/send.svg?url";
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import styled from "@emotion/styled";
-import type { RequestGetConversations, ResponseGetConversations } from "@/pages/api/chatgpt/conversation";
+import type {
+  RequestGetConversations,
+  ResponseGetConversations,
+} from "@/pages/api/chatgpt/conversation";
 import { ResponseGetChats, ResponseSend } from "@/pages/api/chatgpt/chat";
 import { BeatLoader } from "react-spinners";
 import { useDebouncedCallback } from "use-debounce";
@@ -93,8 +96,12 @@ export const ChatRoom = ({
   const [chatHistory, setChatHistory] = React.useState<ResponseGetChats>([]);
   const [message, setMessage] = React.useState(initMessage ?? "");
 
-  const [conversations, setConversations] = useState<ResponseGetConversations>([]);
-  const [currentConversation, setCurrentConversation] = useState<number | null>(null);
+  const [conversations, setConversations] = useState<ResponseGetConversations>(
+    []
+  );
+  const [currentConversation, setCurrentConversation] = useState<number | null>(
+    null
+  );
   // editing conversation name
   const [editing, setEditing] = useState<number | null>(null);
   const [editingName, setEditingName] = useState<string>("");
@@ -131,7 +138,9 @@ export const ChatRoom = ({
     });
   }, [chatHistory]);
 
-  const onEnterForSendMessage: React.KeyboardEventHandler<HTMLInputElement> = (event) => {
+  const onEnterForSendMessage: React.KeyboardEventHandler<HTMLInputElement> = (
+    event
+  ) => {
     if (event.code === "Enter" || event.code === "NumpadEnter") {
       event.preventDefault();
 
@@ -161,18 +170,23 @@ export const ChatRoom = ({
           };
         }
         return conversation;
-      }),
+      })
     );
   }
 
   const handleConversation = useDebouncedCallback(
-    async (conversationId: number | null, event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    async (
+      conversationId: number | null,
+      event: React.MouseEvent<HTMLDivElement, MouseEvent>
+    ) => {
       if (event.detail > 1) {
         // double click
         if (conversationId == null) {
           return;
         }
-        setEditingName(conversations.find((c) => c.id === conversationId)?.name ?? "");
+        setEditingName(
+          conversations.find((c) => c.id === conversationId)?.name ?? ""
+        );
         setEditing(conversationId);
         return;
       }
@@ -197,7 +211,7 @@ export const ChatRoom = ({
         setDisable(false);
       }
     },
-    200,
+    200
   );
 
   async function deleteConversation(conversationId: number) {
@@ -205,7 +219,9 @@ export const ChatRoom = ({
     if (!data) {
       return;
     }
-    setConversations(conversations.filter((conversation) => conversation.id !== conversationId));
+    setConversations(
+      conversations.filter((conversation) => conversation.id !== conversationId)
+    );
   }
 
   async function deleteAllConversations() {
@@ -243,7 +259,10 @@ export const ChatRoom = ({
 
       setChatHistory([...updatedHistory]);
 
-      const data = await ChatAPI.sendMsgWithStreamRes(currentConversation as number, message);
+      const data = await ChatAPI.sendMsgWithStreamRes(
+        currentConversation as number,
+        message
+      );
       if (!data) {
         setDisable(false);
         setChatHistory([...updatedHistory.slice(0, updatedHistory.length - 1)]);
@@ -256,7 +275,9 @@ export const ChatRoom = ({
         const { value, done } = await reader.read();
         isDone = done;
         const chunkValue = decoder.decode(value);
-        const lines = chunkValue.split("\n").filter((line) => line.trim() !== "");
+        const lines = chunkValue
+          .split("\n")
+          .filter((line) => line.trim() !== "");
         for (const line of lines) {
           const message = line.replace(/^data: /, "");
           if (message === "[DONE]") {
@@ -277,7 +298,8 @@ export const ChatRoom = ({
                     codeMark = "";
                   }
                 }
-                updatedHistory[updatedHistory.length - 1].content += parsed.content;
+                updatedHistory[updatedHistory.length - 1].content +=
+                  parsed.content;
               }
               setChatHistory([...updatedHistory]);
             }
@@ -298,22 +320,24 @@ export const ChatRoom = ({
   }
 
   return (
-    <div className='flex w-full h-full'>
+    <div className="flex w-full h-full">
       {/* left */}
-      <div className='hidden max-w-[300px] bg-gray-900 text-white p-2 md:grid grid-rows-[45px_1fr_100px] select-none'>
+      <div className="hidden max-w-[300px] bg-gray-900 text-white p-2 md:grid grid-rows-[45px_1fr_100px] select-none">
         <div
-          className='flex py-3 px-3 items-center gap-3 rounded-md hover:bg-gray-500/10 transition-colors duration-200 text-white cursor-pointer text-sm mb-2 flex-shrink-0 border border-white/20'
+          className="flex py-3 px-3 items-center gap-3 rounded-md hover:bg-gray-500/10 transition-colors duration-200 text-white cursor-pointer text-sm mb-2 flex-shrink-0 border border-white/20"
           onClick={createConversation}
         >
-          <NewChat color='white' />
+          <NewChat color="white" />
           New chat
         </div>
-        <div className='overflow-y-auto overflow-container'>
+        <div className="overflow-y-auto overflow-container">
           {conversations.map((conversation) => (
             <div
               key={conversation.id}
               className={`${
-                currentConversation === conversation.id ? "bg-emerald-700 hover:bg-emerald-900" : "hover:bg-gray-500/10"
+                currentConversation === conversation.id
+                  ? "bg-emerald-700 hover:bg-emerald-900"
+                  : "hover:bg-gray-500/10"
               } flex py-3 px-3 items-center justify-between gap-3 rounded-md transition-colors duration-200 text-white cursor-pointer text-sm mb-2 flex-shrink-0 border border-white/20`}
               onClick={(event) => {
                 handleConversation(conversation.id!, event);
@@ -329,7 +353,10 @@ export const ChatRoom = ({
                   onKeyDown={(ev) => {
                     if (ev.key === "Enter" || ev.key === "NumpadEnter") {
                       ev.preventDefault();
-                      changeConversationName(conversation.id!, ev.currentTarget.value).finally(() => {
+                      changeConversationName(
+                        conversation.id!,
+                        ev.currentTarget.value
+                      ).finally(() => {
                         setEditing(null);
                       });
                     } else if (ev.key === "Escape") {
@@ -338,26 +365,31 @@ export const ChatRoom = ({
                     }
                   }}
                   onBlur={async (ev) => {
-                    await changeConversationName(conversation.id!, ev.currentTarget.value);
+                    await changeConversationName(
+                      conversation.id!,
+                      ev.currentTarget.value
+                    );
                     setEditing(null);
                   }}
                 />
               ) : (
                 <>
-                  <div className='text-sm font-medium overflow-ellipsis truncate max-w-[215px]'>
+                  <div className="text-sm font-medium overflow-ellipsis truncate max-w-[215px]">
                     {conversation.name}
                   </div>
                   {/* delete button */}
                   <div
-                    className='flex items-center justify-center w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 transition-colors duration-200 cursor-pointer'
+                    className="flex items-center justify-center w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 transition-colors duration-200 cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm("Are you sure to delete this conversation?")) {
+                      if (
+                        confirm("Are you sure to delete this conversation?")
+                      ) {
                         deleteConversation(conversation.id!);
                       }
                     }}
                   >
-                    <TrashcanIcon color='white' />
+                    <TrashcanIcon color="white" />
                   </div>
                 </>
               )}
@@ -366,7 +398,7 @@ export const ChatRoom = ({
         </div>
         <div>
           <div
-            className='flex py-3 px-3 items-center gap-3 rounded-md hover:bg-gray-500/10 transition-colors duration-200 text-white cursor-pointer text-sm mb-2 flex-shrink-0 border border-white/20'
+            className="flex py-3 px-3 items-center gap-3 rounded-md hover:bg-gray-500/10 transition-colors duration-200 text-white cursor-pointer text-sm mb-2 flex-shrink-0 border border-white/20"
             onClick={(e) => {
               e.stopPropagation();
               if (confirm("Are you sure to delete ALL conversations?")) {
@@ -374,42 +406,46 @@ export const ChatRoom = ({
               }
             }}
           >
-            <TrashcanIcon color='white' />
+            <TrashcanIcon color="white" />
             Clear conversations
           </div>
           <div
-            className='flex py-3 px-3 items-center gap-3 rounded-md hover:bg-gray-500/10 transition-colors duration-200 text-white cursor-pointer text-sm mb-2 flex-shrink-0 border border-white/20'
+            className="flex py-3 px-3 items-center gap-3 rounded-md hover:bg-gray-500/10 transition-colors duration-200 text-white cursor-pointer text-sm mb-2 flex-shrink-0 border border-white/20"
             onClick={logout}
           >
-            <LogoutIcon color='white' />
+            <LogoutIcon color="white" />
             Log out
           </div>
         </div>
       </div>
 
       {/* right */}
-      <div className='relative flex flex-col items-center justify-start gap-16 h-full py-4 flex-1'>
-        {chatHistory.length === 0 && <Image className='mt-8' src={content} alt='background image'></Image>}
+      <div className="relative flex flex-col items-center justify-start gap-16 h-full py-4 flex-1">
+        {chatHistory.length === 0 && (
+          <Image className="mt-8" src={content} alt="background image"></Image>
+        )}
 
         {/* chats */}
         <ChatsWrapper
           ref={chatsWrapper}
-          className='flex flex-col gap-4 w-full px-4 max-h-[80%] overflow-y-auto mt-11 scroll-smooth'
+          className="flex flex-col gap-4 w-full px-4 max-h-[80%] overflow-y-auto mt-11 scroll-smooth"
         >
           {chatHistory.map((chat, index) => {
             return (
-              <div key={index} className='flex flex-col gap-14 '>
+              <div key={index} className="flex flex-col gap-14 ">
                 {chat.role === "user" ? (
-                  <div className='self-end flex'>
+                  <div className="self-end flex">
                     {/* chat bubble badge */}
-                    <div className='rounded-md bg-green-400 text-white text-xl px-4 py-2 max-w-xl'>
+                    <div className="rounded-md bg-green-400 text-white text-xl px-4 py-2 max-w-xl">
                       <SimpleMarkdown content={chat.content}></SimpleMarkdown>
                     </div>
                   </div>
                 ) : (
-                  <div className='self-start flex'>
-                    <div className='rounded-md bg-orange-400 text-white text-xl px-4 py-2 max-w-xl'>
-                      <SimpleMarkdown content={`${chat.content}${codeMark}`}></SimpleMarkdown>
+                  <div className="self-start flex">
+                    <div className="rounded-md bg-orange-400 text-white text-xl px-4 py-2 max-w-xl">
+                      <SimpleMarkdown
+                        content={`${chat.content}${codeMark}`}
+                      ></SimpleMarkdown>
                     </div>
                   </div>
                 )}
@@ -418,19 +454,27 @@ export const ChatRoom = ({
           })}
         </ChatsWrapper>
 
-        <ChatInputWrapper className='w-full md:w-9/12 mb-5'>
+        <ChatInputWrapper className="w-full md:w-9/12 mb-5">
           <ChatInput
             disabled={disable}
-            placeholder='Type your message here...'
+            placeholder="Type your message here..."
             value={message}
             onChange={(ev) => setMessage(ev.target.value)}
             onKeyDown={onEnterForSendMessage}
-            className='w-full pr-10 md:w-11/12 border-0 md:pr-0 focus:ring-0'
+            className="w-full pr-10 md:w-11/12 border-0 md:pr-0 focus:ring-0"
           />
           {disable ? (
-            <BeatLoader className={"absolute top-1/2 -translate-y-[50%] right-[8px]"} size={8} color='black' />
+            <BeatLoader
+              className={"absolute top-1/2 -translate-y-[50%] right-[8px]"}
+              size={8}
+              color="black"
+            />
           ) : (
-            <ChatSendButton className='w-10 h-full' disabled={disable} onClick={sendMessage} />
+            <ChatSendButton
+              className="w-10 h-full"
+              disabled={disable}
+              onClick={sendMessage}
+            />
           )}
         </ChatInputWrapper>
       </div>
