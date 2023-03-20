@@ -24,12 +24,10 @@ const handler: NextApiHandler = async (req, res) => {
       "Set-Cookie",
       `${SITE_USER_COOKIE}=; Max-Age=0; HttpOnly; Path=/;`
     );
-    res
-      .status(200)
-      .json({
-        message: "Your login session has been expired!",
-        loggedIn: false,
-      });
+    res.status(200).json({
+      message: "Your login session has been expired!",
+      loggedIn: false,
+    });
     return;
   }
 
