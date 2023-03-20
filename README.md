@@ -1,12 +1,12 @@
 # ChatVisualNovel - An endless visual novel powered by ChatGPT.
 
-[![ci](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yaml/badge.svg)](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yaml)
+[![ci](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yml/badge.svg)](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yml)
 ![GitHub](https://img.shields.io/github/license/prompt-engineering/chat-visual-novel)
 [![Discord](https://img.shields.io/discord/1082563233593966612)](https://discord.gg/FSWXq4DmEj)
 
 English | [简体中文](./README.zh-CN.md)
 
-Online Demo: https://visualnovel.fluoritestudio.com/
+Online Demo: https://chatvisualnovel.com/
 
 Join us:
 

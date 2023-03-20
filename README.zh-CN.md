@@ -1,9 +1,9 @@
 # ChatVisualNovel - 这部视觉小说，由ChatGPT来写，永不结束。
 
-[![ci](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yaml/badge.svg)](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yaml)
+[![ci](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yml/badge.svg)](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yml)
 ![GitHub](https://img.shields.io/github/license/prompt-engineering/chat-visual-novel)
 
-演示: https://visualnovel.fluoritestudio.com/
+演示: https://chatvisualnovel.com/
 
 [English](./README.md) | 简体中文
 
