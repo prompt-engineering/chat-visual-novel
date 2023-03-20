@@ -61,9 +61,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const [genre, setGenre] = useState(dict[genres[0]]);
   const [cast, setCast] = useState({} as Cast);
   const [scene, setScene] = useState({} as Scene);
-  const [prompt, setPrompt] = useState(
-    `${dict["prompt_start"]}${genre}${dict["prompt_after_story_genre"]} ${girls.length} ${dict["prompt_after_number_of_girls"]}\n{"main":{"name":""}, girls:[{"name":""}]}\n${dict["prompt_follow_cast_rules"]}`
-  );
+  const getInitialPrompt = (genre: string) =>
+    `${dict["prompt_start"]}${genre}${dict["prompt_after_story_genre"]} ${girls.length} ${dict["prompt_after_number_of_girls"]}\n{"main":{"name":""},girls:[{"name":""}]}\n${dict["prompt_follow_cast_rules"]}`;
+  const [prompt, setPrompt] = useState(getInitialPrompt(genre));
   const [conversationId, setConversationId] = useState(
     undefined as number | undefined
   );
@@ -75,18 +75,17 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     }
     setPromptQueue(promptQueue);
   }, [conversationId, promptQueue]);
-  // Using only English for the continuing prompt as ChatGPT does not follow correctly with Chinese prompt
-  const PROMPT_CONTINUE = "Please continue.";
-  const PROMPT_CONTINUE_WITH_ANSWER = "Please continue based on answer: ";
   const [characterMap, setCharacterMap] = useState(
     {} as { [key: string]: number }
   );
   const [answer, setAnswer] = useState(undefined as string | undefined);
 
   const handleGenreChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
-    setGenre(
-      genres.indexOf(e.target.value) ? dict[e.target.value] : dict[genres[0]]
-    );
+    const _genre = genres.indexOf(e.target.value)
+      ? dict[e.target.value]
+      : dict[genres[0]];
+    setGenre(_genre);
+    setPrompt(getInitialPrompt(_genre));
   };
 
   const updateConversationId = (id: number) => {
@@ -162,12 +161,17 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
       console.log(response);
       console.error(e);
     }
+    setIsDialogueLoading(false);
   };
 
   const character = useMemo(() => {
     if (!(scene && scene.speaker)) return;
     const speaker = scene.speaker.toLowerCase();
-    if (speaker == cast.main.name.toLowerCase() || speaker == "narrator")
+    if (
+      speaker == cast.main.name.toLowerCase() ||
+      speaker.indexOf("narrator") != -1 ||
+      speaker.indexOf("主人公") != -1
+    )
       return player[scene.mood.toLowerCase()];
     if (speaker in characterMap)
       return girls[characterMap[speaker]][scene.mood.toLowerCase()];
@@ -324,7 +328,12 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                     <ExecutePromptButton
                       key={_answer}
                       loading={isDialogueLoading}
-                      text={PROMPT_CONTINUE_WITH_ANSWER + _answer}
+                      text={
+                        dict["prompt_continue_with_answer"] +
+                        '"' +
+                        _answer +
+                        '"'
+                      }
                       name="promptBtn"
                       handleResponse={handleResponse}
                       conversationId={conversationId}
@@ -341,7 +350,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             ) : (
               <ExecutePromptButton
                 loading={isDialogueLoading}
-                text={PROMPT_CONTINUE}
+                text={dict["prompt_continue"]}
                 name="promptBtn"
                 handleResponse={handleResponse}
                 conversationId={conversationId}
