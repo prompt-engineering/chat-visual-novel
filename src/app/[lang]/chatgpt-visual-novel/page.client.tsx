@@ -6,6 +6,8 @@ import {
   ChangeEventHandler,
   useEffect,
   MouseEventHandler,
+  SetStateAction,
+  Dispatch,
 } from "react";
 import {
   Box,
@@ -67,7 +69,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const [conversationId, setConversationId] = useState(
     undefined as number | undefined
   );
-  const [promptQueue, setPromptQueue] = useState([] as string[]);
+  const [promptQueue, setPromptQueue] = useState(
+    [] as { prompt: string; setLoading?: Dispatch<SetStateAction<boolean>> }[]
+  );
   useEffect(() => {
     if (conversationId && promptQueue && promptQueue.length) {
       const _prompt = promptQueue.shift();
@@ -92,13 +96,16 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     setConversationId(id);
   };
 
-  const executePrompt = async (_prompt: string) => {
-    setIsLoading(true);
+  const executePrompt = async (_prompt: {
+    prompt: string;
+    setLoading?: Dispatch<SetStateAction<boolean>>;
+  }) => {
+    if (_prompt.setLoading) _prompt.setLoading(true);
     try {
       const isLoggedIn = await UserAPI.isLoggedIn();
       if (!isLoggedIn) {
         onOpen();
-        setIsLoading(false);
+        if (_prompt.setLoading) _prompt.setLoading(false);
         return;
       }
     } catch (e) {
@@ -107,18 +114,25 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
       return;
     }
     if (conversationId) {
-      const response: ResponseSend = (await sendMessage(
-        conversationId,
-        _prompt
-      )) as ResponseSend;
-      if (response) {
-        handleResponse(response);
+      try {
+        const response: ResponseSend = (await sendMessage(
+          conversationId,
+          _prompt.prompt
+        )) as ResponseSend;
+        if (response) {
+          handleResponse(response, _prompt.setLoading);
+        }
+      } catch (e) {
+        console.error(e);
       }
     }
-    setIsLoading(false);
+    if (_prompt.setLoading) _prompt.setLoading(false);
   };
 
-  const handleResponse = async (response: ResponseSend) => {
+  const handleResponse = async (
+    response: ResponseSend,
+    setLoading?: Dispatch<SetStateAction<boolean>>
+  ) => {
     try {
       const json = JSON.parse(response[0].content.trim());
       if ("main" in json && "girls" in json) {
@@ -143,8 +157,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
         }${Object.keys(girls[0]).join(", ")}\n${
           dict["prompt_places"]
         }${Object.keys(places).join(", ")}\n${dict["prompt_end"]}`;
-        setPrompt(storyPrompt);
-        setPromptQueue([...promptQueue, storyPrompt]);
+        setPromptQueue([...promptQueue, { prompt: storyPrompt, setLoading }]);
       } else if (
         "speaker" in json &&
         "dialogue" in json &&
@@ -160,8 +173,16 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     } catch (e) {
       console.log(response);
       console.error(e);
+      executePrompt({
+        prompt: `Error: ${
+          (e as Error).message
+        }. Please response again only in JSON.`,
+        setLoading,
+      });
+    } finally {
+      setIsLoading(false);
+      setIsDialogueLoading(false);
     }
-    setIsDialogueLoading(false);
   };
 
   const character = useMemo(() => {
@@ -258,7 +279,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                 <ExecutePromptButton
                   text={prompt}
                   name="promptBtn"
-                  handleResponse={handleResponse}
+                  handleResponse={(response) =>
+                    handleResponse(response, setIsLoading)
+                  }
                   conversationId={conversationId}
                   updateConversationId={updateConversationId}
                   conversationName={genre}
@@ -335,7 +358,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                         '"'
                       }
                       name="promptBtn"
-                      handleResponse={handleResponse}
+                      handleResponse={(response) =>
+                        handleResponse(response, setIsDialogueLoading)
+                      }
                       conversationId={conversationId}
                       updateConversationId={updateConversationId}
                       btnText={_answer}
@@ -352,7 +377,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                 loading={isDialogueLoading}
                 text={dict["prompt_continue"]}
                 name="promptBtn"
-                handleResponse={handleResponse}
+                handleResponse={(response) =>
+                  handleResponse(response, setIsDialogueLoading)
+                }
                 conversationId={conversationId}
                 updateConversationId={updateConversationId}
                 btnText={dict["continue"]}

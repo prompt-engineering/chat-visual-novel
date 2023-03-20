@@ -69,9 +69,13 @@ function ExecutePromptButton(props: ExecButtonProps) {
     }
 
     if (conversationId) {
-      const response: any = await sendMessage(conversationId, props.text);
-      if (response && props.handleResponse) {
-        props.handleResponse(response as ResponseSend);
+      try {
+        const response: any = await sendMessage(conversationId, props.text);
+        if (response && props.handleResponse) {
+          props.handleResponse(response as ResponseSend);
+        }
+      } catch (e) {
+        console.error(e);
       }
     }
 
