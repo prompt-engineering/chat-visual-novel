@@ -32,6 +32,7 @@ import CopyComponent from "@/components/CopyComponent";
 import * as UserAPI from "@/api/user";
 import { sendMessage } from "@/api/chat";
 import { BeatLoader } from "react-spinners";
+import { ClickPromptBird } from "@/components/ClickPrompt/ClickPromptButton";
 
 type Scene = {
   speaker: string;
@@ -64,7 +65,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const [cast, setCast] = useState({} as Cast);
   const [scene, setScene] = useState({} as Scene);
   const getInitialPrompt = (genre: string) =>
-    `${dict["prompt_start"]}${genre}${dict["prompt_after_story_genre"]} ${girls.length} ${dict["prompt_after_number_of_girls"]}\n{"main":{"name":""},girls:[{"name":""}]}\n${dict["prompt_follow_cast_rules"]}`;
+    `${dict["prompt_start"]}${girls.length}${dict["prompt_after_number_of_girls"]}\n{"main":{"name":""},girls:[{"name":""}]}\n${dict["prompt_follow_cast_rules"]}`;
   const [prompt, setPrompt] = useState(getInitialPrompt(genre));
   const [conversationId, setConversationId] = useState(
     undefined as number | undefined
@@ -150,8 +151,8 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
         }
         setCharacterMap(newCharacterMap);
         setCast(cast);
-        const storyPrompt = `${
-          dict["prompt_story_start"]
+        const storyPrompt = `${dict["prompt_story_start"]}${genre}${
+          dict["prompt_after_story_genre"]
         }\n{"speaker":"","dialogue":"","mood":"","location":""}\n${
           dict["prompt_after_story_format"]
         }${Object.keys(girls[0]).join(", ")}\n${
@@ -173,12 +174,6 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     } catch (e) {
       console.log(response);
       console.error(e);
-      executePrompt({
-        prompt: `Error: ${
-          (e as Error).message
-        }. Please response again only in JSON.`,
-        setLoading,
-      });
     } finally {
       setIsLoading(false);
       setIsDialogueLoading(false);
@@ -190,13 +185,12 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     const speaker = scene.speaker.toLowerCase();
     if (
       speaker == cast.main.name.toLowerCase() ||
-      speaker.indexOf("narrator") != -1 ||
       speaker.indexOf("主人公") != -1
     )
       return player[scene.mood.toLowerCase()];
     if (speaker in characterMap)
       return girls[characterMap[speaker]][scene.mood.toLowerCase()];
-  }, [scene, characterMap, girls, player]);
+  }, [scene, cast, characterMap, girls, player]);
 
   const handleDialogueLoadingStateChange = (_isLoading: boolean) => {
     setIsDialogueLoading(_isLoading);
@@ -238,15 +232,24 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             left: "50%",
             top: "50%",
             transform: "translate(-50%, -50%)",
-            minWidth: "256px",
+            width: "300px",
           }}
         >
-          <CardHeader>
+          <ClickPromptBird />
+          <CardHeader textAlign="center">
             <Heading size="md">{dict["loading"]}</Heading>
           </CardHeader>
-          <CardBody style={{ margin: "0 auto" }}>
-            <BeatLoader color="teal" />
+          <CardBody>
+            <Text>
+              {dict["cast_prefix"]}
+              {cast.main.name},{" "}
+              {cast.girls.flatMap((val) => val.name).join(", ")}
+              {dict["cast_suffix"]}
+            </Text>
           </CardBody>
+          <CardFooter>
+            <BeatLoader style={{ margin: "0 auto" }} />
+          </CardFooter>
         </Card>
       ) : !(scene && scene.speaker) ? (
         <Card
@@ -265,13 +268,18 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             <Select mt={4} onChange={handleGenreChange}>
               {genres.map((storyGenre) => (
                 <option key={storyGenre} value={storyGenre}>
-                  {dict[storyGenre]}
+                  {upperFirst(dict[storyGenre])}
                 </option>
               ))}
             </Select>
           </CardBody>
           <CardFooter>
-            <Flex w="90%" flexGrow={"column"} justifyContent="space-between">
+            <Flex
+              w="100%"
+              mr="18px"
+              flexGrow={"column"}
+              justifyContent="space-between"
+            >
               <Box>
                 <CopyComponent value={prompt} />
               </Box>
@@ -306,39 +314,39 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
           }}
         >
           {character && (
-            <>
-              <Image
-                src={character ?? ""}
-                alt={scene.speaker}
-                style={{
-                  position: "absolute",
-                  left: "35%",
-                  bottom: "100%",
-                  width: "30%",
-                  minWidth: "256px",
-                }}
-              />
-              <Box
-                style={{
-                  borderRadius: "10px 10px 0 0",
-                  background: "rgba(0,128,128,0.8)",
-                  color: "white",
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  padding: "0.4rem 1rem 0 1rem",
-                  height: "2.2rem",
-                  position: "absolute",
-                  left: "1rem",
-                  top: "-2.2rem",
-                }}
-              >
-                {upperFirst(scene.speaker)}
-              </Box>
-            </>
+            <Image
+              src={character ?? ""}
+              alt={scene.speaker}
+              style={{
+                position: "absolute",
+                left: "35%",
+                bottom: "100%",
+                width: "30%",
+                minWidth: "256px",
+              }}
+            />
+          )}
+          {scene.speaker && (
+            <Box
+              style={{
+                borderRadius: "10px 10px 0 0",
+                background: "rgba(0,128,128,0.8)",
+                color: "white",
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+                textAlign: "center",
+                padding: "0.4rem 1rem 0 1rem",
+                height: "2.2rem",
+                position: "absolute",
+                left: "1rem",
+                top: "-2.2rem",
+              }}
+            >
+              {upperFirst(scene.speaker)}
+            </Box>
           )}
           {scene.dialogue}
-          <VStack paddingTop="1rem" paddingRight="1rem" alignItems="end">
+          <VStack paddingTop="1rem" paddingRight="18px" alignItems="end">
             {isDialogueLoading ? (
               <>
                 {answer && <Box style={{ fontSize: "1rem" }}>{answer}</Box>}

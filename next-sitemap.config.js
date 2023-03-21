@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: process.env.SITE_URL || "https://www.clickprompt.org/",
+  siteUrl: process.env.SITE_URL || "https://www.chatvisualnovel.com/",
   generateRobotsTxt: true, // (optional)
   // ...other options
 };

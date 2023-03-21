@@ -42,11 +42,14 @@ function ExecutePromptButton(props: ExecButtonProps) {
     try {
       const isLoggedIn = await UserAPI.isLoggedIn();
       if (!isLoggedIn) {
+        setHasLogin(false);
         onOpen();
         setIsLoading(false);
         if (props.handleLoadingStateChange)
           props.handleLoadingStateChange(false);
         return;
+      } else {
+        setHasLogin(true);
       }
     } catch (e) {
       console.log(e);

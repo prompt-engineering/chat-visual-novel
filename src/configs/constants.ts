@@ -1,5 +1,5 @@
 export const SITE_TITLE = "ClickPrompt";
-export const SITE_URL = "https://www.clickprompt.org/";
+export const SITE_URL = "https://www.chatvisualnovel.com/";
 export const SITE_LOCALE_COOKIE = "CLICKPROMPT_LOCALE";
 export const SITE_USER_COOKIE = "CLICKPROMPT_USER";
 export const GITHUB_URL =
