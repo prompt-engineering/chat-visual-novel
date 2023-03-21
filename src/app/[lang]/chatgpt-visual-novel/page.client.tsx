@@ -350,7 +350,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             </Box>
           )}
           {scene.dialogue}
-          <VStack paddingTop="1rem" paddingRight="18px" alignItems="end">
+          <VStack paddingTop="1rem" paddingRight="18px" alignItems="end" minH="60px">
             {isDialogueLoading ? (
               <>
                 {answer && <Box style={{ fontSize: "1rem" }}>{answer}</Box>}
