@@ -74,7 +74,6 @@ const handler: NextApiHandler = async (req, res) => {
               ({
                 role: it.role,
                 content: it.content,
-                name: it.name,
               } as ChatCompletionRequestMessage)
           ),
           newMsgs: body.messages,

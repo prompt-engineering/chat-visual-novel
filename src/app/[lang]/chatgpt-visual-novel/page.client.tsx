@@ -6,6 +6,8 @@ import {
   ChangeEventHandler,
   useEffect,
   MouseEventHandler,
+  SetStateAction,
+  Dispatch,
 } from "react";
 import {
   Box,
@@ -30,6 +32,7 @@ import CopyComponent from "@/components/CopyComponent";
 import * as UserAPI from "@/api/user";
 import { sendMessage } from "@/api/chat";
 import { BeatLoader } from "react-spinners";
+import { ClickPromptBird } from "@/components/ClickPrompt/ClickPromptButton";
 
 type Scene = {
   speaker: string;
@@ -61,13 +64,15 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const [genre, setGenre] = useState(dict[genres[0]]);
   const [cast, setCast] = useState({} as Cast);
   const [scene, setScene] = useState({} as Scene);
-  const [prompt, setPrompt] = useState(
-    `${dict["prompt_start"]}${genre}${dict["prompt_after_story_genre"]} ${girls.length} ${dict["prompt_after_number_of_girls"]}\n{"main":{"name":""}, girls:[{"name":""}]}\n${dict["prompt_follow_cast_rules"]}`
-  );
+  const getInitialPrompt = () =>
+    `${dict["prompt_start"]}${girls.length}${dict["prompt_after_number_of_girls"]}\n{"main":{"name":""},girls:[{"name":""}]}\n${dict["prompt_follow_cast_rules"]}`;
+  const [prompt, setPrompt] = useState(getInitialPrompt());
   const [conversationId, setConversationId] = useState(
     undefined as number | undefined
   );
-  const [promptQueue, setPromptQueue] = useState([] as string[]);
+  const [promptQueue, setPromptQueue] = useState(
+    [] as { prompt: string; setLoading?: Dispatch<SetStateAction<boolean>> }[]
+  );
   useEffect(() => {
     if (conversationId && promptQueue && promptQueue.length) {
       const _prompt = promptQueue.shift();
@@ -75,31 +80,33 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     }
     setPromptQueue(promptQueue);
   }, [conversationId, promptQueue]);
-  // Using only English for the continuing prompt as ChatGPT does not follow correctly with Chinese prompt
-  const PROMPT_CONTINUE = "Please continue.";
-  const PROMPT_CONTINUE_WITH_ANSWER = "Please continue based on answer: ";
   const [characterMap, setCharacterMap] = useState(
     {} as { [key: string]: number }
   );
   const [answer, setAnswer] = useState(undefined as string | undefined);
 
   const handleGenreChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
-    setGenre(
-      genres.indexOf(e.target.value) ? dict[e.target.value] : dict[genres[0]]
-    );
+    const _genre = genres.indexOf(e.target.value)
+      ? dict[e.target.value]
+      : dict[genres[0]];
+    setGenre(_genre);
+    setPrompt(getInitialPrompt());
   };
 
   const updateConversationId = (id: number) => {
     setConversationId(id);
   };
 
-  const executePrompt = async (_prompt: string) => {
-    setIsLoading(true);
+  const executePrompt = async (_prompt: {
+    prompt: string;
+    setLoading?: Dispatch<SetStateAction<boolean>>;
+  }) => {
+    if (_prompt.setLoading) _prompt.setLoading(true);
     try {
       const isLoggedIn = await UserAPI.isLoggedIn();
       if (!isLoggedIn) {
         onOpen();
-        setIsLoading(false);
+        if (_prompt.setLoading) _prompt.setLoading(false);
         return;
       }
     } catch (e) {
@@ -108,18 +115,25 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
       return;
     }
     if (conversationId) {
-      const response: ResponseSend = (await sendMessage(
-        conversationId,
-        _prompt
-      )) as ResponseSend;
-      if (response) {
-        handleResponse(response);
+      try {
+        const response: ResponseSend = (await sendMessage(
+          conversationId,
+          _prompt.prompt
+        )) as ResponseSend;
+        if (response) {
+          handleResponse(response, _prompt.setLoading);
+        }
+      } catch (e) {
+        console.error(e);
       }
     }
-    setIsLoading(false);
+    if (_prompt.setLoading) _prompt.setLoading(false);
   };
 
-  const handleResponse = async (response: ResponseSend) => {
+  const handleResponse = async (
+    response: ResponseSend,
+    setLoading?: Dispatch<SetStateAction<boolean>>
+  ) => {
     try {
       const json = JSON.parse(response[0].content.trim());
       if ("main" in json && "girls" in json) {
@@ -137,15 +151,14 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
         }
         setCharacterMap(newCharacterMap);
         setCast(cast);
-        const storyPrompt = `${
-          dict["prompt_story_start"]
-        }\n{"speaker":"","dialogue":"","mood":"","location":""}\n${
+        const storyPrompt = `${dict["prompt_story_start"]}${genre}${
+          dict["prompt_after_story_genre"]
+        }\n{"speaker":string,"dialogue":string,"mood":string,"location":string,"answers":string[]}\n${
           dict["prompt_after_story_format"]
-        }${Object.keys(girls[0]).join(", ")}\n${
+        }${JSON.stringify(Object.keys(girls[0]))}\n${
           dict["prompt_places"]
-        }${Object.keys(places).join(", ")}\n${dict["prompt_end"]}`;
-        setPrompt(storyPrompt);
-        setPromptQueue([...promptQueue, storyPrompt]);
+        }${JSON.stringify(Object.keys(places))}\n${dict["prompt_end"]}`;
+        setPromptQueue([...promptQueue, { prompt: storyPrompt, setLoading }]);
       } else if (
         "speaker" in json &&
         "dialogue" in json &&
@@ -161,17 +174,27 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     } catch (e) {
       console.log(response);
       console.error(e);
+    } finally {
+      setIsLoading(false);
+      setIsDialogueLoading(false);
     }
   };
 
   const character = useMemo(() => {
-    if (!(scene && scene.speaker)) return;
+    if (!scene) return;
+    if (!scene.speaker) return;
     const speaker = scene.speaker.toLowerCase();
-    if (speaker == cast.main.name.toLowerCase() || speaker == "narrator")
-      return player[scene.mood.toLowerCase()];
+    if (
+      speaker == cast.main.name.toLowerCase() ||
+      speaker.indexOf("主人公") != -1
+    )
+      return player[scene.mood.toLowerCase()] ?? player["neutral"];
     if (speaker in characterMap)
-      return girls[characterMap[speaker]][scene.mood.toLowerCase()];
-  }, [scene, characterMap, girls, player]);
+      return (
+        girls[characterMap[speaker]][scene.mood.toLowerCase()] ??
+        girls[characterMap[speaker]]["neutral"]
+      );
+  }, [scene, cast, characterMap, girls, player]);
 
   const handleDialogueLoadingStateChange = (_isLoading: boolean) => {
     setIsDialogueLoading(_isLoading);
@@ -194,7 +217,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     >
       <Image
         src={
-          scene.location in places ? places[scene.location] : places["lobby"]
+          scene.location in places ? places[scene.location] : places["street"]
         }
         alt={scene.location}
         style={{
@@ -213,15 +236,24 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             left: "50%",
             top: "50%",
             transform: "translate(-50%, -50%)",
-            minWidth: "256px",
+            width: "300px",
           }}
         >
-          <CardHeader>
+          <ClickPromptBird />
+          <CardHeader textAlign="center">
             <Heading size="md">{dict["loading"]}</Heading>
           </CardHeader>
-          <CardBody style={{ margin: "0 auto" }}>
-            <BeatLoader color="teal" />
+          <CardBody>
+            <Text>
+              {dict["cast_prefix"]}
+              {cast.main.name},{" "}
+              {cast.girls.flatMap((val) => val.name).join(", ")}
+              {dict["cast_suffix"]}
+            </Text>
           </CardBody>
+          <CardFooter>
+            <BeatLoader style={{ margin: "0 auto" }} />
+          </CardFooter>
         </Card>
       ) : !(scene && scene.speaker) ? (
         <Card
@@ -240,13 +272,18 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             <Select mt={4} onChange={handleGenreChange}>
               {genres.map((storyGenre) => (
                 <option key={storyGenre} value={storyGenre}>
-                  {dict[storyGenre]}
+                  {upperFirst(dict[storyGenre])}
                 </option>
               ))}
             </Select>
           </CardBody>
           <CardFooter>
-            <Flex w="90%" flexGrow={"column"} justifyContent="space-between">
+            <Flex
+              w="100%"
+              mr="18px"
+              flexGrow={"column"}
+              justifyContent="space-between"
+            >
               <Box>
                 <CopyComponent value={prompt} />
               </Box>
@@ -254,7 +291,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                 <ExecutePromptButton
                   text={prompt}
                   name="promptBtn"
-                  handleResponse={handleResponse}
+                  handleResponse={(response) =>
+                    handleResponse(response, setIsLoading)
+                  }
                   conversationId={conversationId}
                   updateConversationId={updateConversationId}
                   conversationName={genre}
@@ -279,39 +318,44 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
           }}
         >
           {character && (
-            <>
-              <Image
-                src={character ?? ""}
-                alt={scene.speaker}
-                style={{
-                  position: "absolute",
-                  left: "35%",
-                  bottom: "100%",
-                  width: "30%",
-                  minWidth: "256px",
-                }}
-              />
-              <Box
-                style={{
-                  borderRadius: "10px 10px 0 0",
-                  background: "rgba(0,128,128,0.8)",
-                  color: "white",
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  padding: "0.4rem 1rem 0 1rem",
-                  height: "2.2rem",
-                  position: "absolute",
-                  left: "1rem",
-                  top: "-2.2rem",
-                }}
-              >
-                {upperFirst(scene.speaker)}
-              </Box>
-            </>
+            <Image
+              src={character ?? ""}
+              alt={scene.speaker}
+              style={{
+                position: "absolute",
+                left: "35%",
+                bottom: "100%",
+                width: "30%",
+                minWidth: "256px",
+              }}
+            />
+          )}
+          {scene.speaker && (
+            <Box
+              style={{
+                borderRadius: "10px 10px 0 0",
+                background: "rgba(0,128,128,0.8)",
+                color: "white",
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+                textAlign: "center",
+                padding: "0.4rem 1rem 0 1rem",
+                height: "2.2rem",
+                position: "absolute",
+                left: "1rem",
+                top: "-2.2rem",
+              }}
+            >
+              {upperFirst(scene.speaker)}
+            </Box>
           )}
           {scene.dialogue}
-          <VStack paddingTop="1rem" paddingRight="1rem" alignItems="end">
+          <VStack
+            paddingTop="1rem"
+            paddingRight="18px"
+            alignItems="end"
+            minH="60px"
+          >
             {isDialogueLoading ? (
               <>
                 {answer && <Box style={{ fontSize: "1rem" }}>{answer}</Box>}
@@ -324,9 +368,16 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                     <ExecutePromptButton
                       key={_answer}
                       loading={isDialogueLoading}
-                      text={PROMPT_CONTINUE_WITH_ANSWER + _answer}
+                      text={
+                        dict["prompt_continue_with_answer"] +
+                        '"' +
+                        _answer +
+                        '"'
+                      }
                       name="promptBtn"
-                      handleResponse={handleResponse}
+                      handleResponse={(response) =>
+                        handleResponse(response, setIsDialogueLoading)
+                      }
                       conversationId={conversationId}
                       updateConversationId={updateConversationId}
                       btnText={_answer}
@@ -341,9 +392,11 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             ) : (
               <ExecutePromptButton
                 loading={isDialogueLoading}
-                text={PROMPT_CONTINUE}
+                text={dict["prompt_continue"]}
                 name="promptBtn"
-                handleResponse={handleResponse}
+                handleResponse={(response) =>
+                  handleResponse(response, setIsDialogueLoading)
+                }
                 conversationId={conversationId}
                 updateConversationId={updateConversationId}
                 btnText={dict["continue"]}

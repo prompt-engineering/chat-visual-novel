@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://www.clickprompt.org/
+Host: https://www.chatvisualnovel.com/
 
 # Sitemaps
-Sitemap: https://www.clickprompt.org/sitemap.xml
+Sitemap: https://www.chatvisualnovel.com/sitemap.xml

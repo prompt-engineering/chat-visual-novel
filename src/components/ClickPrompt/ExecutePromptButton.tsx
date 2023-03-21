@@ -42,11 +42,14 @@ function ExecutePromptButton(props: ExecButtonProps) {
     try {
       const isLoggedIn = await UserAPI.isLoggedIn();
       if (!isLoggedIn) {
+        setHasLogin(false);
         onOpen();
         setIsLoading(false);
         if (props.handleLoadingStateChange)
           props.handleLoadingStateChange(false);
         return;
+      } else {
+        setHasLogin(true);
       }
     } catch (e) {
       console.log(e);
@@ -69,9 +72,13 @@ function ExecutePromptButton(props: ExecButtonProps) {
     }
 
     if (conversationId) {
-      const response: any = await sendMessage(conversationId, props.text);
-      if (response && props.handleResponse) {
-        props.handleResponse(response as ResponseSend);
+      try {
+        const response: any = await sendMessage(conversationId, props.text);
+        if (response && props.handleResponse) {
+          props.handleResponse(response as ResponseSend);
+        }
+      } catch (e) {
+        console.error(e);
       }
     }
 

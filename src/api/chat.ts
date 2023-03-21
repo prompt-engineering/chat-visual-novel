@@ -47,16 +47,13 @@ export async function sendMessage(
       ],
     } as RequestSend),
   });
-  const data = (await response.json()) as ResponseSend;
   if (!response.ok) {
-    alert("Error: " + JSON.stringify((data as any).error));
-    return;
+    throw new Error(await response.text());
   }
-  if (data == null) {
-    alert("Error: sOmeTHiNg wEnT wRoNg");
-    return;
+  const data = (await response.json()) as ResponseSend;
+  if (!data) {
+    throw new Error("Empty response");
   }
-
   return data;
 }
 
