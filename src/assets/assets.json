@@ -31,8 +31,10 @@
   ],
   "places": {
     "room": "https://assets.chatvisualnovel.com/00115-1693129910.png",
-    "lobby": "https://assets.chatvisualnovel.com/00116-767133290.png",
+    "lobby": "https://assets.chatvisualnovel.com/00007-2952547515.png",
     "garden": "https://assets.chatvisualnovel.com/00117-1865753899.png",
-    "restaurant": "https://assets.chatvisualnovel.com/00146-2156326714.png"
+    "restaurant": "https://assets.chatvisualnovel.com/00146-2156326714.png",
+    "street": "https://assets.chatvisualnovel.com/00024-3109134467.png",
+    "school": "https://assets.chatvisualnovel.com/00068-792831435.png"
   }
 }

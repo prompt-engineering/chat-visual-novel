@@ -64,9 +64,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const [genre, setGenre] = useState(dict[genres[0]]);
   const [cast, setCast] = useState({} as Cast);
   const [scene, setScene] = useState({} as Scene);
-  const getInitialPrompt = (genre: string) =>
+  const getInitialPrompt = () =>
     `${dict["prompt_start"]}${girls.length}${dict["prompt_after_number_of_girls"]}\n{"main":{"name":""},girls:[{"name":""}]}\n${dict["prompt_follow_cast_rules"]}`;
-  const [prompt, setPrompt] = useState(getInitialPrompt(genre));
+  const [prompt, setPrompt] = useState(getInitialPrompt());
   const [conversationId, setConversationId] = useState(
     undefined as number | undefined
   );
@@ -90,7 +90,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
       ? dict[e.target.value]
       : dict[genres[0]];
     setGenre(_genre);
-    setPrompt(getInitialPrompt(_genre));
+    setPrompt(getInitialPrompt());
   };
 
   const updateConversationId = (id: number) => {
@@ -153,11 +153,11 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
         setCast(cast);
         const storyPrompt = `${dict["prompt_story_start"]}${genre}${
           dict["prompt_after_story_genre"]
-        }\n{"speaker":"","dialogue":"","mood":"","location":""}\n${
+        }\n{"speaker":string,"dialogue":string,"mood":string,"location":string,"answers":string[]}\n${
           dict["prompt_after_story_format"]
-        }${Object.keys(girls[0]).join(", ")}\n${
+        }${JSON.stringify(Object.keys(girls[0]))}\n${
           dict["prompt_places"]
-        }${Object.keys(places).join(", ")}\n${dict["prompt_end"]}`;
+        }${JSON.stringify(Object.keys(places))}\n${dict["prompt_end"]}`;
         setPromptQueue([...promptQueue, { prompt: storyPrompt, setLoading }]);
       } else if (
         "speaker" in json &&
@@ -181,15 +181,19 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   };
 
   const character = useMemo(() => {
-    if (!(scene && scene.speaker)) return;
+    if (!scene) return;
+    if (!scene.speaker) return;
     const speaker = scene.speaker.toLowerCase();
     if (
       speaker == cast.main.name.toLowerCase() ||
       speaker.indexOf("主人公") != -1
     )
-      return player[scene.mood.toLowerCase()];
+      return player[scene.mood.toLowerCase()] ?? player["neutral"];
     if (speaker in characterMap)
-      return girls[characterMap[speaker]][scene.mood.toLowerCase()];
+      return (
+        girls[characterMap[speaker]][scene.mood.toLowerCase()] ??
+        girls[characterMap[speaker]]["neutral"]
+      );
   }, [scene, cast, characterMap, girls, player]);
 
   const handleDialogueLoadingStateChange = (_isLoading: boolean) => {
@@ -213,7 +217,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     >
       <Image
         src={
-          scene.location in places ? places[scene.location] : places["lobby"]
+          scene.location in places ? places[scene.location] : places["street"]
         }
         alt={scene.location}
         style={{
