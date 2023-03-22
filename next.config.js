@@ -9,7 +9,7 @@ const nextConfig = {
   trailingSlash: true,
   transpilePackages: ["react-syntax-highlighter"],
   images: {
-    domains: ["prompt-engineering.github.io"],
+    domains: ["prompt-engineering.github.io", "chatvisualnovelassets.s3.us-west-2.amazonaws.com", "assets.chatvisualnovel.com"],
   },
   webpack: (config, options) => {
     config.module.rules.push({

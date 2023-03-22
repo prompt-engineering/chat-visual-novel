@@ -1,4 +1,5 @@
 {
+  "genres": ["romance", "fantasy", "horror", "sci-fi", "crime"],
   "player": {
     "neutral": "https://assets.chatvisualnovel.com/00144-1619487309.png",
     "happy": "https://assets.chatvisualnovel.com/00089-1619487309.png",
@@ -6,6 +7,7 @@
     "suprised": "https://assets.chatvisualnovel.com/00093-1619487309.png",
     "closed_eyes": "https://assets.chatvisualnovel.com/00095-1619487309.png"
   },
+  "playerGender": "male",
   "girls": [
     {
       "neutral": "https://assets.chatvisualnovel.com/00055-3317647877.png",
@@ -30,11 +32,17 @@
     }
   ],
   "places": {
+    "street": "https://assets.chatvisualnovel.com/00024-3109134467.png",
     "room": "https://assets.chatvisualnovel.com/00115-1693129910.png",
     "lobby": "https://assets.chatvisualnovel.com/00007-2952547515.png",
     "garden": "https://assets.chatvisualnovel.com/00117-1865753899.png",
     "restaurant": "https://assets.chatvisualnovel.com/00146-2156326714.png",
-    "street": "https://assets.chatvisualnovel.com/00024-3109134467.png",
     "school": "https://assets.chatvisualnovel.com/00068-792831435.png"
-  }
+  },
+  "characterPosition": {
+    "bottom": "100%",
+    "maxW": "70vw",
+    "maxH": "70vh"
+  },
+  "copyrightNote": "copyright_note"
 }
