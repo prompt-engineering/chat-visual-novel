@@ -1,8 +1,15 @@
 {
   "title": "在开始之前，",
-  "prompt_start": "生成用户(main character)(男)和",
-  "prompt_after_number_of_girls": "位女孩。按这个格式：",
-  "prompt_follow_cast_rules": "人物的名字都是好听的假中文名\n只以JSON作答",
+  "male": "男",
+  "female": "女",
+  "prompt_main_character_default": "生成用户(main character)(",
+  "prompt_main_character_gender_suffix": ")",
+  "prompt_main_character_named": "用户(main character)必须是：",
+  "prompt_other_characters": ", 其他角色必须是：",
+  "prompt_generate_girls_prefix": ", 生成",
+  "prompt_generate_girls_suffix": "位女孩角色",
+  "prompt_characters_json_prefix": ", 按这个格式输出：",
+  "prompt_characters_json_suffix": "只以JSON作答",
   "prompt_story_start": "使用之前的名字写一个",
   "prompt_after_story_genre": "的小说。按照这个格式：",
   "prompt_after_story_format": "遵循以下规则：\nmood 只能从这些中挑选：",
@@ -24,5 +31,13 @@
   "continue": "继续",
   "prompt": "咒语",
   "cast_prefix": "这是一个",
-  "cast_suffix": "之间的故事。"
+  "and": "和",
+  "cast_suffix": "之间的故事。",
+  "room": "房间",
+  "lobby": "大厅",
+  "garden": "花园",
+  "restaurant": "餐厅",
+  "street": "街头",
+  "school": "学校",
+  "copyright_note": "图片由 Stable Diffusion 生成。模型：AbyssOrangeMix3"
 }

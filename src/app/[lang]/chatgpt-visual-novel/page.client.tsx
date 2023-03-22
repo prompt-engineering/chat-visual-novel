@@ -19,10 +19,10 @@ import {
   Text,
   Link,
   Select,
-  Image,
   useDisclosure,
   Heading,
   VStack,
+  Image,
 } from "@chakra-ui/react";
 import assets from "@/assets/assets.json";
 import { upperFirst } from "lodash-es";
@@ -48,15 +48,73 @@ type Character = {
 
 type Cast = {
   main: Character;
-  girls: Character[];
+  others: Character[];
+};
+
+type NamedCharacter = {
+  images: KV<string>;
+  isPlayer: boolean | undefined;
+};
+
+type KV<T> = {
+  [key: string]: T;
+};
+
+type Config = {
+  genres: string[];
+  player?: KV<string>;
+  playerGender: string;
+  girls?: KV<string>[];
+  characters?: NamedCharacter[];
+  places: KV<string>;
+  characterPosition?: {
+    maxW?: string;
+    maxH?: string;
+    bottom?: string;
+  };
+  copyrightNote?: string;
 };
 
 function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const dict = i18n.dict;
-  const genres = ["romance", "fantasy", "horror", "sci-fi", "crime"];
-  const player = assets.player as { [key: string]: string };
-  const girls = assets.girls as { [key: string]: string }[];
-  const places = assets.places as { [key: string]: string };
+  const config = JSON.parse(JSON.stringify(assets)) as Config;
+  const genres = config.genres;
+  const player = config.player;
+  const girls = config.girls;
+  const places = config.places;
+  let mainCharacterName: undefined | string;
+  const otherCharacterNames: string[] = [];
+  const _characterMap: KV<KV<string>> = {};
+  if (config.characters && Object.keys(config.characters).length > 0) {
+    const characters: { [key: string]: NamedCharacter } = JSON.parse(
+      JSON.stringify(config.characters)
+    );
+    for (const _key in characters) {
+      const character = characters[_key];
+      if (character.isPlayer) {
+        mainCharacterName = _key in dict ? dict[_key] : _key;
+      } else {
+        otherCharacterNames.push(_key in dict ? dict[_key] : _key);
+      }
+      _characterMap[_key.toLowerCase()] = character.images;
+      if (_key.toLowerCase() in dict) {
+        _characterMap[dict[_key.toLowerCase()].toLowerCase()] =
+          character.images;
+      }
+    }
+  }
+  const _locationMap: KV<string> = {};
+  const _locationNames: string[] = [];
+  for (const _key in places) {
+    _locationMap[_key.toLowerCase()] = places[_key];
+    if (_key.toLowerCase() in dict) {
+      _locationMap[dict[_key.toLowerCase()].toLowerCase()] = places[_key];
+      _locationNames.push(dict[_key.toLowerCase()]);
+    } else {
+      _locationNames.push(_key);
+    }
+  }
+  const [characterMap, setCharacterMap] = useState(_characterMap);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogueLoading, setIsDialogueLoading] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -64,15 +122,34 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const [genre, setGenre] = useState(dict[genres[0]]);
   const [cast, setCast] = useState({} as Cast);
   const [scene, setScene] = useState({} as Scene);
-  const getInitialPrompt = () =>
-    `${dict["prompt_start"]}${girls.length}${dict["prompt_after_number_of_girls"]}\n{"main":{"name":""},girls:[{"name":""}]}\n${dict["prompt_follow_cast_rules"]}`;
-  const [prompt, setPrompt] = useState(getInitialPrompt());
   const [conversationId, setConversationId] = useState(
     undefined as number | undefined
   );
   const [promptQueue, setPromptQueue] = useState(
     [] as { prompt: string; setLoading?: Dispatch<SetStateAction<boolean>> }[]
   );
+  const getInitialPrompt = () => {
+    const mainCharacterPrompt = `${
+      mainCharacterName
+        ? dict["prompt_main_character_named"] + mainCharacterName
+        : dict["prompt_main_character_default"] +
+          config.playerGender +
+          dict["prompt_main_character_gender_suffix"]
+    }`;
+    const otherCharacterPrompt = `${
+      otherCharacterNames.length
+        ? dict["prompt_other_characters"] + JSON.stringify(otherCharacterNames)
+        : girls?.length
+        ? dict["prompt_generate_girls_prefix"] +
+          girls.length +
+          dict["prompt_generate_girls_suffix"]
+        : ""
+    }`;
+    return `${mainCharacterPrompt}${otherCharacterPrompt}${dict["prompt_characters_json_prefix"]}\n{"main":{"name":""},"others":[{"name":""}]}\n${dict["prompt_characters_json_suffix"]}`;
+  };
+  const [prompt, setPrompt] = useState(getInitialPrompt());
+  const [answer, setAnswer] = useState(undefined as string | undefined);
+
   useEffect(() => {
     if (conversationId && promptQueue && promptQueue.length) {
       const _prompt = promptQueue.shift();
@@ -80,10 +157,34 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     }
     setPromptQueue(promptQueue);
   }, [conversationId, promptQueue]);
-  const [characterMap, setCharacterMap] = useState(
-    {} as { [key: string]: number }
-  );
-  const [answer, setAnswer] = useState(undefined as string | undefined);
+
+  const character = useMemo(() => {
+    if (!scene) return;
+    if (!scene.speaker) return;
+    const speaker = scene.speaker.toLowerCase();
+    if (speaker in characterMap)
+      return (
+        characterMap[speaker][scene.mood.toLowerCase()] ??
+        characterMap[speaker]["neutral"]
+      );
+    if (
+      speaker == cast.main.name.toLowerCase() ||
+      speaker.indexOf("主人公") != -1
+    ) {
+      if (
+        mainCharacterName &&
+        mainCharacterName.toLowerCase() in characterMap
+      ) {
+        return (
+          characterMap[mainCharacterName.toLowerCase()][
+            scene.mood.toLowerCase()
+          ] ?? characterMap[mainCharacterName.toLowerCase()]["neutral"]
+        );
+      } else if (player) {
+        return player[scene.mood.toLowerCase()] ?? player["neutral"];
+      }
+    }
+  }, [scene, cast, characterMap, player]);
 
   const handleGenreChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
     const _genre = genres.indexOf(e.target.value)
@@ -135,29 +236,45 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     setLoading?: Dispatch<SetStateAction<boolean>>
   ) => {
     try {
-      const json = JSON.parse(response[0].content.trim());
-      if ("main" in json && "girls" in json) {
+      const result = response[0].content.trim();
+      const jsonStart = result.indexOf("{");
+      const jsonEnd = result.lastIndexOf("}");
+      let json = {};
+      if (jsonStart >= 0 && jsonEnd >= 0) {
+        const jsonStr = result.substring(jsonStart, jsonEnd + 1);
+        json = JSON.parse(jsonStr);
+      } else {
+        throw new Error("Invalid json");
+      }
+      if ("main" in json && "others" in json) {
         const cast = json as Cast;
-        const newCharacterMap = characterMap;
-        for (const girlIndex in cast.girls) {
-          const girl = cast.girls[girlIndex].name.toLowerCase();
-          const girlCount = Object.keys(newCharacterMap).length;
+        const newCharacterMap: KV<KV<string>> = {};
+        for (const _index in cast.others) {
+          const _name = cast.others[_index].name.toLowerCase();
           if (
-            !(girl in newCharacterMap) &&
-            Object.keys(newCharacterMap).length < girls.length
+            !(_name in _characterMap) &&
+            !(_name in newCharacterMap) &&
+            girls?.length
           ) {
-            newCharacterMap[girl] = girlCount;
+            const _length = Object.keys(newCharacterMap).length;
+            if (_length < girls.length) {
+              newCharacterMap[_name] = girls[_length];
+            }
           }
         }
-        setCharacterMap(newCharacterMap);
+        const _newCharacterMap = { ..._characterMap, ...newCharacterMap };
+        const moods = Object.keys(
+          _newCharacterMap[Object.keys(_newCharacterMap)[0]]
+        );
+        setCharacterMap(_newCharacterMap);
         setCast(cast);
         const storyPrompt = `${dict["prompt_story_start"]}${genre}${
           dict["prompt_after_story_genre"]
         }\n{"speaker":string,"dialogue":string,"mood":string,"location":string,"answers":string[]}\n${
           dict["prompt_after_story_format"]
-        }${JSON.stringify(Object.keys(girls[0]))}\n${
-          dict["prompt_places"]
-        }${JSON.stringify(Object.keys(places))}\n${dict["prompt_end"]}`;
+        }${JSON.stringify(moods)}\n${dict["prompt_places"]}${JSON.stringify(
+          _locationNames
+        )}\n${dict["prompt_end"]}`;
         setPromptQueue([...promptQueue, { prompt: storyPrompt, setLoading }]);
       } else if (
         "speaker" in json &&
@@ -180,22 +297,6 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     }
   };
 
-  const character = useMemo(() => {
-    if (!scene) return;
-    if (!scene.speaker) return;
-    const speaker = scene.speaker.toLowerCase();
-    if (
-      speaker == cast.main.name.toLowerCase() ||
-      speaker.indexOf("主人公") != -1
-    )
-      return player[scene.mood.toLowerCase()] ?? player["neutral"];
-    if (speaker in characterMap)
-      return (
-        girls[characterMap[speaker]][scene.mood.toLowerCase()] ??
-        girls[characterMap[speaker]]["neutral"]
-      );
-  }, [scene, cast, characterMap, girls, player]);
-
   const handleDialogueLoadingStateChange = (_isLoading: boolean) => {
     setIsDialogueLoading(_isLoading);
   };
@@ -217,9 +318,13 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     >
       <Image
         src={
-          scene.location in places ? places[scene.location] : places["street"]
+          scene &&
+          scene.location &&
+          scene.location.toLowerCase() in _locationMap
+            ? _locationMap[scene.location.toLowerCase()]
+            : places[Object.keys(places)[0]]
         }
-        alt={scene.location}
+        alt={scene.location ?? ""}
         style={{
           position: "absolute",
           left: "0",
@@ -227,6 +332,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
           minHeight: "100%",
           minWidth: "100%",
           objectFit: "cover",
+          zIndex: "-2",
         }}
       />
       {isLoading ? (
@@ -246,8 +352,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
           <CardBody>
             <Text>
               {dict["cast_prefix"]}
-              {cast.main.name},{" "}
-              {cast.girls.flatMap((val) => val.name).join(", ")}
+              {cast.others.flatMap((val) => val.name).join(", ")}
+              {dict["and"]}
+              {cast.main.name}
               {dict["cast_suffix"]}
             </Text>
           </CardBody>
@@ -317,19 +424,6 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             bottom: "0",
           }}
         >
-          {character && (
-            <Image
-              src={character ?? ""}
-              alt={scene.speaker}
-              style={{
-                position: "absolute",
-                left: "35%",
-                bottom: "100%",
-                width: "30%",
-                minWidth: "256px",
-              }}
-            />
-          )}
           {scene.speaker && (
             <Box
               style={{
@@ -404,25 +498,32 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
               />
             )}
           </VStack>
-          <Text
-            style={{
-              fontSize: "0.5rem",
-              color: "lightgray",
-              paddingTop: "0.5rem",
-            }}
-          >
-            {dict["sd_note_prefix"]}
-            <Link href="https://github.com/CompVis/stable-diffusion" isExternal>
-              Stable Diffusion
-            </Link>
-            {dict["sd_note_model"]}
-            <Link
-              href="https://huggingface.co/WarriorMama777/OrangeMixs/tree/main/Models/AbyssOrangeMix3"
-              isExternal
+          {config.copyrightNote && config.copyrightNote in dict && (
+            <Text
+              style={{
+                fontSize: "0.5rem",
+                color: "lightgray",
+                paddingTop: "0.5rem",
+              }}
             >
-              AbyssOrangeMix3
-            </Link>
-          </Text>
+              {dict[config.copyrightNote]}
+            </Text>
+          )}
+          {character && (
+            <Image
+              src={character ?? ""}
+              alt={scene.speaker ?? ""}
+              style={{
+                position: "absolute",
+                left: "50%",
+                transform: "translate(-50%, 0)",
+                zIndex: "-1",
+                bottom: config.characterPosition?.bottom ?? "100%",
+                maxHeight: config.characterPosition?.maxH ?? "70vh",
+                maxWidth: config.characterPosition?.maxW ?? "70vw",
+              }}
+            />
+          )}
         </Box>
       )}
     </Box>
