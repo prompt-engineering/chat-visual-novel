@@ -39,7 +39,7 @@
 {
   "genres": string[],           //（Required）（i18n）故事类型，用于Prompt
   "player": {                   // (Optional）让ChatGPT命名的玩家角色，当 characters 中不存在 isPlayer: true 的角色时使用。
-    [key: string]: string,          //（Required） 每一个key对应一个这个角色的表情，可以是任意数量但必须存在一个 neutral，角色列表中第一位角色的所有可能表情将被使用在 Prompt 中作为可挑选的 mood。value 是这个表情对应的图片地址。
+    [key: string]: string,          //（Required）每一个key对应一个这个角色的表情，可以是任意数量但必须存在一个 neutral，角色列表中第一位角色的所有可能表情将被使用在 Prompt 中作为可挑选的 mood。value 是这个表情对应的图片地址。
   },
   "playerGender": string,       //（Required）（i18n）主人公性别，用于Prompt
   "girls": [{                   // (Optional）让ChatGPT命名的女性角色，当 characters 中不存在 isPlayer: false 的角色时使用。
@@ -54,7 +54,7 @@
     }
   },
   "places": {                   //（Required）地点（背景）
-    [key: string]: string,          // （Required）（i18n）每一个key对应一个地点，可以是任意数量但必须至少存在一个，所有可能的地点将被使用在 Prompt 中作为可挑选的 location。value 是这个地点对应的图片地址。
+    [key: string]: string,          //（Required）（i18n）每一个key对应一个地点，可以是任意数量但必须至少存在一个，所有可能的地点将被使用在 Prompt 中作为可挑选的 location。value 是这个地点对应的图片地址。
   },
   "characterPosition": {        //（Optional）角色图片显示配置（CSS）
     "bottom": "0",                  //（Optional）到屏幕最下方的距离，默认值 100% (文字对话框高度）
