@@ -60,9 +60,9 @@
     [key: string]: string,          //（Required）（i18n）每一个key对应一个地点，可以是任意数量但必须至少存在一个，所有可能的地点将被使用在 Prompt 中作为可挑选的 location。value 是这个地点对应的图片地址。
   },
   "characterPosition": {        //（Optional）角色图片显示配置（CSS）
-    "bottom": "0",                  //（Optional）到屏幕最下方的距离，默认值 100% (文字对话框高度）
-    "maxW": "70vw",                 //（Optioanl）最大宽度，默认值 70vw
-    "maxH": "70vh"                  //（Optioanl）最大高度，默认值 70vh
+    "bottom": string,               //（Optional）到屏幕最下方的距离，默认值 100% (相对于文字对话框高度）
+    "maxW": string,                 //（Optioanl）最大宽度，默认值 70vw
+    "maxH": string                  //（Optioanl）最大高度，默认值 70vh
   }
 }
 ```
