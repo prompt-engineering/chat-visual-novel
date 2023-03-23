@@ -1,34 +1,42 @@
 {
   "genres": ["romance", "fantasy", "horror", "sci-fi", "crime"],
   "player": {
-    "neutral": "https://assets.chatvisualnovel.com/00144-1619487309.png",
-    "happy": "https://assets.chatvisualnovel.com/00089-1619487309.png",
-    "sad": "https://assets.chatvisualnovel.com/00091-1619487309.png",
-    "suprised": "https://assets.chatvisualnovel.com/00093-1619487309.png",
-    "closed_eyes": "https://assets.chatvisualnovel.com/00095-1619487309.png"
+    "images": {
+      "neutral": "https://assets.chatvisualnovel.com/00144-1619487309.png",
+      "happy": "https://assets.chatvisualnovel.com/00089-1619487309.png",
+      "sad": "https://assets.chatvisualnovel.com/00091-1619487309.png",
+      "suprised": "https://assets.chatvisualnovel.com/00093-1619487309.png",
+      "closed_eyes": "https://assets.chatvisualnovel.com/00095-1619487309.png"
+    }
   },
   "playerGender": "male",
   "girls": [
     {
-      "neutral": "https://assets.chatvisualnovel.com/00055-3317647877.png",
-      "happy": "https://assets.chatvisualnovel.com/00057-3317647877.png",
-      "sad": "https://assets.chatvisualnovel.com/00059-3317647877.png",
-      "closed_eyes": "https://assets.chatvisualnovel.com/00061-3317647877.png",
-      "suprised": "https://assets.chatvisualnovel.com/00063-3317647877.png"
+      "images": {
+        "neutral": "https://assets.chatvisualnovel.com/00055-3317647877.png",
+        "happy": "https://assets.chatvisualnovel.com/00057-3317647877.png",
+        "sad": "https://assets.chatvisualnovel.com/00059-3317647877.png",
+        "closed_eyes": "https://assets.chatvisualnovel.com/00061-3317647877.png",
+        "suprised": "https://assets.chatvisualnovel.com/00063-3317647877.png"
+      }
     },
     {
-      "neutral": "https://assets.chatvisualnovel.com/00063-3415190727.png",
-      "happy": "https://assets.chatvisualnovel.com/00065-3415190727.png",
-      "sad": "https://assets.chatvisualnovel.com/00067-3415190727.png",
-      "suprised": "https://assets.chatvisualnovel.com/00071-3415190727.png",
-      "closed_eyes": "https://assets.chatvisualnovel.com/00073-3415190727.png"
+      "images": {
+        "neutral": "https://assets.chatvisualnovel.com/00063-3415190727.png",
+        "happy": "https://assets.chatvisualnovel.com/00065-3415190727.png",
+        "sad": "https://assets.chatvisualnovel.com/00067-3415190727.png",
+        "suprised": "https://assets.chatvisualnovel.com/00071-3415190727.png",
+        "closed_eyes": "https://assets.chatvisualnovel.com/00073-3415190727.png"
+      }
     },
     {
-      "neutral": "https://assets.chatvisualnovel.com/00073-645522131.png",
-      "happy": "https://assets.chatvisualnovel.com/00075-645522131.png",
-      "sad": "https://assets.chatvisualnovel.com/00077-645522131.png",
-      "suprised": "https://assets.chatvisualnovel.com/00079-645522131.png",
-      "closed_eyes": "https://assets.chatvisualnovel.com/00081-645522131.png"
+      "images": {
+        "neutral": "https://assets.chatvisualnovel.com/00073-645522131.png",
+        "happy": "https://assets.chatvisualnovel.com/00075-645522131.png",
+        "sad": "https://assets.chatvisualnovel.com/00077-645522131.png",
+        "suprised": "https://assets.chatvisualnovel.com/00079-645522131.png",
+        "closed_eyes": "https://assets.chatvisualnovel.com/00081-645522131.png"
+      }
     }
   ],
   "places": {
@@ -39,9 +47,11 @@
     "restaurant": "https://assets.chatvisualnovel.com/00146-2156326714.png",
     "school": "https://assets.chatvisualnovel.com/00068-792831435.png"
   },
-  "characterImage": {
+  "imageSettings": {
+    "left": "50%",
+    "transform": "translate(-50%, 0)",
     "bottom": "100%",
-    "maxW": "70vw",
-    "maxH": "70vh"
+    "maxWidth": "70vw",
+    "maxHeight": "70vh"
   }
 }

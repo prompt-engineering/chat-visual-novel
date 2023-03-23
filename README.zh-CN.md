@@ -42,27 +42,38 @@
 {
   "genres": string[],           //（Required）（i18n）故事类型，用于Prompt
   "player": {                   // (Optional）让ChatGPT命名的玩家角色，当 characters 中不存在 isPlayer: true 的角色时使用。
-    [key: string]: string,          //（Required）每一个key对应这个角色的一个表情，可以是任意数量但必须存在一个 neutral，角色列表中第一位角色的所有可能表情将被使用在 Prompt 中作为可挑选的 mood。value 是这个表情对应的图片地址。
+    "images": {
+      [key: string]: string,        //（Required）每一个key对应这个角色的一个表情，可以是任意数量但必须存在一个 neutral，角色列表中第一位角色的所有可能表情将被使用在 Prompt 中作为可挑选的 mood。value 是这个表情对应的图片地址。
+    },
+    "imagesSettings": {
+      [key: string]: string,        //（Optional）当显示这个角色的图片时加载的CSS，最高优先级。
+    }
   },
-  "playerGender": string,       //（Required）（i18n）主人公性别，用于Prompt
+  "playerGender": string,       //（Optional）（i18n）主人公性别，当 characters 中不存在 isPlayer: true 的角色时用于Prompt。
   "girls": [{                   // (Optional）让ChatGPT命名的女性角色，当 characters 中不存在 isPlayer: false 的角色时使用。
-    [key: string]: string,          //（Required）每一个key对应这个角色的一个表情，可以是任意数量但必须存在一个 neutral，角色列表中第一位角色的所有可能表情将被使用在 Prompt 中作为可挑选的 mood。value 是这个表情对应的图片地址。
+    "images": {
+      [key: string]: string,        //（Required）每一个key对应这个角色的一个表情，可以是任意数量但必须存在一个 neutral，角色列表中第一位角色的所有可能表情将被使用在 Prompt 中作为可挑选的 mood。value 是这个表情对应的图片地址。
+    },
+    "imagesSettings": {
+      [key: string]: string,        //（Optional）当显示这个角色的图片时加载的CSS，最高优先级。
+    }
   }],
   "characters": {               //（Optional）有名字的角色
     [key: string]: {                //（Required）（i18n）角色名字，用于Prompt
       "isPlayer": boolean,          //（Optional）设为 true 时将作为玩家角色，请只设置一个玩家角色。
       "images": {
         [key: string]: string,      //（Required）每一个key对应这个角色的一个表情，可以是任意数量但必须存在一个 neutral，角色列表中第一位角色的所有可能表情将被使用在 Prompt 中作为可挑选的 mood。value 是这个表情对应的图片地址。
+      },
+      "imagesSettings": {
+        [key: string]: string,      //（Optional）当显示这个角色的图片时加载的CSS，最高优先级。
       }
     }
   },
   "places": {                   //（Required）地点（背景）
     [key: string]: string,          //（Required）（i18n）每一个key对应一个地点，可以是任意数量但必须至少存在一个，所有可能的地点将被使用在 Prompt 中作为可挑选的 location。value 是这个地点对应的图片地址。
   },
-  "characterImage": {           //（Optional）角色图片显示配置（CSS）
-    "bottom": string,               //（Optional）到屏幕最下方的距离，默认值 100% (相对于文字对话框高度）
-    "maxW": string,                 //（Optioanl）最大宽度，默认值 70vw
-    "maxH": string                  //（Optioanl）最大高度，默认值 70vh
+  "imagesSettings": {           //（Optional）角色图片显示配置（CSS）
+    [key: string]: string,
   }
 }
 ```
