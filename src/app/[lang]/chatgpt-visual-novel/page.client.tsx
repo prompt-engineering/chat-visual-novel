@@ -8,6 +8,7 @@ import {
   MouseEventHandler,
   SetStateAction,
   Dispatch,
+  CSSProperties,
 } from "react";
 import {
   Box,
@@ -17,7 +18,6 @@ import {
   CardHeader,
   Flex,
   Text,
-  Link,
   Select,
   useDisclosure,
   Heading,
@@ -42,18 +42,19 @@ type Scene = {
   answers?: string[];
 };
 
-type Character = {
+type CharacterName = {
   name: string;
 };
 
 type Cast = {
-  main: Character;
-  others: Character[];
+  main: CharacterName;
+  others: CharacterName[];
 };
 
-type NamedCharacter = {
+type Character = {
   images: KV<string>;
-  isPlayer: boolean | undefined;
+  imageSettings?: CSSProperties;
+  isPlayer?: boolean;
 };
 
 type KV<T> = {
@@ -62,16 +63,17 @@ type KV<T> = {
 
 type Config = {
   genres: string[];
-  player?: KV<string>;
+  player?: Character;
   playerGender: string;
-  girls?: KV<string>[];
-  characters?: NamedCharacter[];
+  girls?: Character[];
+  characters?: KV<Character>;
   places: KV<string>;
-  characterImage?: {
-    maxW?: string;
-    maxH?: string;
-    bottom?: string;
-  };
+  imageSettings?: CSSProperties;
+};
+
+type Speaker = {
+  image: string;
+  imageSettings?: CSSProperties;
 };
 
 function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
@@ -83,9 +85,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const places = config.places;
   let mainCharacterName: undefined | string;
   const otherCharacterNames: string[] = [];
-  const _characterMap: KV<KV<string>> = {};
+  const _characterMap: KV<Character> = {};
   if (config.characters && Object.keys(config.characters).length > 0) {
-    const characters: { [key: string]: NamedCharacter } = JSON.parse(
+    const characters: { [key: string]: Character } = JSON.parse(
       JSON.stringify(config.characters)
     );
     for (const _key in characters) {
@@ -95,10 +97,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
       } else {
         otherCharacterNames.push(_key in dict ? dict[_key] : _key);
       }
-      _characterMap[_key.toLowerCase()] = character.images;
+      _characterMap[_key.toLowerCase()] = character;
       if (_key.toLowerCase() in dict) {
-        _characterMap[dict[_key.toLowerCase()].toLowerCase()] =
-          character.images;
+        _characterMap[dict[_key.toLowerCase()].toLowerCase()] = character;
       }
     }
   }
@@ -132,7 +133,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
       mainCharacterName
         ? dict["prompt_main_character_named"] + mainCharacterName
         : dict["prompt_main_character_default"] +
-          config.playerGender +
+          (config.playerGender in dict
+            ? dict[config.playerGender]
+            : config.playerGender) +
           dict["prompt_main_character_gender_suffix"]
     }`;
     const otherCharacterPrompt = `${
@@ -157,15 +160,17 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     setPromptQueue(promptQueue);
   }, [conversationId, promptQueue]);
 
-  const character = useMemo(() => {
+  const currentSpeaker: Speaker | undefined = useMemo(() => {
     if (!scene) return;
     if (!scene.speaker) return;
     const speaker = scene.speaker.toLowerCase();
     if (speaker in characterMap)
-      return (
-        characterMap[speaker][scene.mood.toLowerCase()] ??
-        characterMap[speaker]["neutral"]
-      );
+      return {
+        image:
+          characterMap[speaker].images[scene.mood.toLowerCase()] ??
+          characterMap[speaker].images["neutral"],
+        imageSettings: characterMap[speaker].imageSettings,
+      };
     if (
       speaker == cast.main.name.toLowerCase() ||
       speaker.indexOf("主人公") != -1
@@ -174,13 +179,20 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
         mainCharacterName &&
         mainCharacterName.toLowerCase() in characterMap
       ) {
-        return (
-          characterMap[mainCharacterName.toLowerCase()][
-            scene.mood.toLowerCase()
-          ] ?? characterMap[mainCharacterName.toLowerCase()]["neutral"]
-        );
+        return {
+          image:
+            characterMap[mainCharacterName.toLowerCase()].images[
+              scene.mood.toLowerCase()
+            ] ??
+            characterMap[mainCharacterName.toLowerCase()].images["neutral"],
+          imageSettings: characterMap[speaker].imageSettings,
+        };
       } else if (player) {
-        return player[scene.mood.toLowerCase()] ?? player["neutral"];
+        return {
+          image:
+            player.images[scene.mood.toLowerCase()] ?? player.images["neutral"],
+          imageSettings: player.imageSettings,
+        };
       }
     }
   }, [scene, cast, characterMap, player]);
@@ -247,7 +259,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
       }
       if ("main" in json && "others" in json) {
         const cast = json as Cast;
-        const newCharacterMap: KV<KV<string>> = {};
+        const newCharacterMap: KV<Character> = {};
         for (const _index in cast.others) {
           const _name = cast.others[_index].name.toLowerCase();
           if (
@@ -263,7 +275,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
         }
         const _newCharacterMap = { ..._characterMap, ...newCharacterMap };
         const moods = Object.keys(
-          _newCharacterMap[Object.keys(_newCharacterMap)[0]]
+          _newCharacterMap[Object.keys(_newCharacterMap)[0]].images
         );
         setCharacterMap(_newCharacterMap);
         setCast(cast);
@@ -312,7 +324,6 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
         left: 0,
         width: "100%",
         height: "100%",
-        cursor: "pointer",
       }}
     >
       <Image
@@ -508,18 +519,15 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
               {dict["copyright_note"]}
             </Text>
           )}
-          {character && (
+          {currentSpeaker && (
             <Image
-              src={character ?? ""}
+              src={currentSpeaker.image ?? ""}
               alt={scene.speaker ?? ""}
               style={{
                 position: "absolute",
-                left: "50%",
-                transform: "translate(-50%, 0)",
                 zIndex: "-1",
-                bottom: config.characterImage?.bottom ?? "100%",
-                maxHeight: config.characterImage?.maxH ?? "70vh",
-                maxWidth: config.characterImage?.maxW ?? "70vw",
+                ...config.imageSettings,
+                ...currentSpeaker.imageSettings,
               }}
             />
           )}
