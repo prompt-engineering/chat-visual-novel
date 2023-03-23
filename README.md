@@ -29,7 +29,17 @@ Follow these steps to deploy ChatVisualNovel on Vercel with a serverless MySQL d
 
 With these steps completed, your ChatVisualNovel will be deployed on Vercel with a Planetscale serverless MySQL database.
 
-# Development
+## Local Usage
+
+1.  Clone the [ChatVisualNovel repo](https://github.com/prompt-engineering/chat-visual-novel) from GitHub.
+2.  Dependencies on Planetscale services still exist temporarily. Please register as mentioned in the previous section and configure `DATABASE_URL` in the `.env` file.
+3.  Run `npm install`.
+4.  Generate an encryption key using `node scripts/gen-enc.js` and configure it in the `.env` file in the format `ENC_KEY=***`. (Note: You can copy the `.env` file from env.template)
+5.  You can now use the application by running `npm run dev`.
+
+# Build your own
+
+1. Configure [assets.json](src/assets/assets.json)
 
 ## LICENSE
 
