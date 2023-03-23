@@ -36,6 +36,8 @@
 
 [assets.json](src/assets/assets.json)
 
+- 当出现（i18n）标注时，对应的 key 或者 value 需要在 i18n 中配置多语言对应。
+
 ```typescript
 {
   "genres": string[],           //（Required）（i18n）故事类型，用于Prompt
