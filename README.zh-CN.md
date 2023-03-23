@@ -35,6 +35,7 @@
 # 自定义模版
 
 [assets.json](src/assets/assets.json)
+
 ```typescript
 {
   "genres": string[],           //（Required）（i18n）故事类型，用于Prompt

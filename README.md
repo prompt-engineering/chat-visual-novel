@@ -40,6 +40,7 @@ With these steps completed, your ChatVisualNovel will be deployed on Vercel with
 # Customization
 
 [assets.json](src/assets/assets.json)
+
 ```typescript
 {
   "genres": string[],           //(Required)(i18n) Genres, used in Prompt
