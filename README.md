@@ -64,7 +64,7 @@ With these steps completed, your ChatVisualNovel will be deployed on Vercel with
   "places": {                   //(Required) Location (Background)
     [key: string]: string,          //(Required)(i18n) Each key is a location. There must be at least one location. All possible locations will be used in Prompt for location selection. Value is the URL to the image of the location.
   },
-  "characterPosition": {        //(Optional) Character image settings (CSS)
+  "characterImage": {           //(Optional) Character image settings (CSS)
     "bottom": string,               //(Optional) Distance between the bottom edge of the image to the bottom of view port. Defaults to 100% (relative to dialogue box)
     "maxW": string,                 //(Optioanl) Maximum width. Defaults to 70vw
     "maxH": string                  //(Optioanl) Maximum height. Defualts to 70vh

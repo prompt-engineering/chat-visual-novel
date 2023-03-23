@@ -67,12 +67,11 @@ type Config = {
   girls?: KV<string>[];
   characters?: NamedCharacter[];
   places: KV<string>;
-  characterPosition?: {
+  characterImage?: {
     maxW?: string;
     maxH?: string;
     bottom?: string;
   };
-  copyrightNote?: string;
 };
 
 function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
@@ -498,7 +497,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
               />
             )}
           </VStack>
-          {config.copyrightNote && config.copyrightNote in dict && (
+          {"copyright_note" in dict && (
             <Text
               style={{
                 fontSize: "0.5rem",
@@ -506,7 +505,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                 paddingTop: "0.5rem",
               }}
             >
-              {dict[config.copyrightNote]}
+              {dict["copyright_note"]}
             </Text>
           )}
           {character && (
@@ -518,9 +517,9 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                 left: "50%",
                 transform: "translate(-50%, 0)",
                 zIndex: "-1",
-                bottom: config.characterPosition?.bottom ?? "100%",
-                maxHeight: config.characterPosition?.maxH ?? "70vh",
-                maxWidth: config.characterPosition?.maxW ?? "70vw",
+                bottom: config.characterImage?.bottom ?? "100%",
+                maxHeight: config.characterImage?.maxH ?? "70vh",
+                maxWidth: config.characterImage?.maxW ?? "70vw",
               }}
             />
           )}

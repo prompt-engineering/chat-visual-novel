@@ -39,10 +39,9 @@
     "restaurant": "https://assets.chatvisualnovel.com/00146-2156326714.png",
     "school": "https://assets.chatvisualnovel.com/00068-792831435.png"
   },
-  "characterPosition": {
+  "characterImage": {
     "bottom": "100%",
     "maxW": "70vw",
     "maxH": "70vh"
-  },
-  "copyrightNote": "copyright_note"
+  }
 }
