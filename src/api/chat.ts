@@ -10,7 +10,9 @@ import * as EdgeChat from "@/api/edge/chat";
 
 export async function getChatsByConversationId(conversationId: number) {
   if (isClientSideOpenAI())
-    return EdgeChat.getChatsByConversationId(conversationId) as ResponseGetChats;
+    return EdgeChat.getChatsByConversationId(
+      conversationId
+    ) as ResponseGetChats;
   const response = await nodeFetch("/api/chatgpt/chat", {
     method: "POST",
     body: JSON.stringify({
@@ -38,7 +40,11 @@ export async function sendMessage(
   name?: string
 ) {
   if (isClientSideOpenAI())
-    return await EdgeChat.sendMessage(conversationId, message, name) as ResponseSend;
+    return (await EdgeChat.sendMessage(
+      conversationId,
+      message,
+      name
+    )) as ResponseSend;
   const response = await nodeFetch("/api/chatgpt/chat", {
     method: "POST",
     body: JSON.stringify({
