@@ -180,16 +180,21 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   }, [conversationId, promptQueue]);
 
   const apiTypes = ["client", "server"];
-  const [apiType, setApiType] = useState(
-    window.sessionStorage.getItem("o:t")
-      ? JSON.parse(window.sessionStorage.getItem("o:t") ?? '"client"')
-      : "client"
-  );
-  useEffect(() => {
-    if (apiType) {
-      window.sessionStorage.setItem("o:t", JSON.stringify(apiType));
-    }
-  }, [apiType]);
+  const [apiType, setApiType] = useState("client");
+  if (typeof window !== "undefined") {
+    useEffect(() => {
+      const _apiType = window.sessionStorage.getItem("o:t");
+      if (_apiType) {
+        setApiType(JSON.parse(_apiType));
+      } else {
+        window.sessionStorage.setItem("o:t", JSON.stringify(apiType));
+      }
+    }, [window.sessionStorage["o:a"]]);
+  }
+  const handleApiTypeChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
+    window.sessionStorage.setItem("o:t", JSON.stringify(e.target.value));
+    setApiType(e.target.value);
+  };
 
   const currentSpeaker: Speaker | undefined = useMemo(() => {
     if (!scene) return;
@@ -481,11 +486,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
             >
               {dict["select_api_type_note"]}
             </Text>
-            <Select
-              mt={4}
-              onChange={(e) => setApiType(e.target.value)}
-              value={apiType}
-            >
+            <Select mt={4} onChange={handleApiTypeChange} value={apiType}>
               {apiTypes.map((_apiType) => (
                 <option key={_apiType} value={_apiType}>
                   {upperFirst(dict[_apiType])}
