@@ -1,4 +1,4 @@
-# ChatVisualNovel - An endless visual novel powered by ChatGPT.
+# ChatVisualNovel - A fully customizable visual novel engine powered by ChatGPT
 
 [![ci](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yml/badge.svg)](https://github.com/prompt-engineering/chat-visual-novel/actions/workflows/ci.yml)
 ![GitHub](https://img.shields.io/github/license/prompt-engineering/chat-visual-novel)
