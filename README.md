@@ -7,7 +7,9 @@
 English | [简体中文](./README.zh-CN.md)
 
 Online Demo: https://chatvisualnovel.com/
+
 Genshin Doujin: https://genshin.chatvisualnovel.com/
+
 Ace Attorney Doujin: https://ace.chatvisualnovel.com/
 
 Join us:
