@@ -5,6 +5,10 @@
 
 演示: https://chatvisualnovel.com/
 
+原神同人: https://genshin.chatvisualnovel.com/
+
+逆转裁判同人: https://ace.chatvisualnovel.com/
+
 [English](./README.md) | 简体中文
 
 # 在 Vercel 上部署 ChatVisualNovel，使用 Planetscale
