@@ -54,6 +54,9 @@ function ExecutePromptButton(props: ExecButtonProps) {
     } catch (e) {
       console.log(e);
       setHasLogin(false);
+      setIsLoading(false);
+      if (props.handleLoadingStateChange) props.handleLoadingStateChange(false);
+      return;
     }
 
     let conversationId = props.conversationId;

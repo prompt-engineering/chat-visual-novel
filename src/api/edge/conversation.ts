@@ -1,4 +1,8 @@
-import { ResponseGetConversations } from "@/pages/api/chatgpt/conversation";
+import {
+  ResponseCreateConversation,
+  ResponseDeleteAllConversation,
+  ResponseGetConversations,
+} from "@/pages/api/chatgpt/conversation";
 import { WebStorage } from "@/storage/webstorage";
 import { deleteAllChats, deleteChatsByConversationId } from "./chat";
 
@@ -31,7 +35,7 @@ export function createConversation(name?: string) {
   );
   const _conversations =
     _conversationsRepo.get<ResponseGetConversations>() ?? [];
-  let nextIndex = 0;
+  let nextIndex = 1;
   for (const _index in _conversations) {
     if ((_conversations[_index].id ?? 0) >= nextIndex)
       nextIndex = (_conversations[_index].id ?? 0) + 1;
@@ -46,7 +50,7 @@ export function createConversation(name?: string) {
   _conversations.push(_newConversation);
   _conversationsRepo.set(_conversations);
 
-  return _newConversation;
+  return _newConversation as ResponseCreateConversation;
 }
 
 export function changeConversationName(conversationId: number, name: string) {
@@ -60,7 +64,7 @@ export function changeConversationName(conversationId: number, name: string) {
   _result.conversation.name = name;
   _conversationsRepo.set(_conversations);
 
-  return _result.conversation;
+  return _result.conversation as ResponseCreateConversation;
 }
 
 export function deleteConversation(conversationId: number) {
@@ -74,7 +78,7 @@ export function deleteConversation(conversationId: number) {
   deleteChatsByConversationId(conversationId);
   _conversations.splice(_result.index, 1);
   _conversationsRepo.set(_conversations);
-  return _conversations;
+  return _result.conversation as ResponseCreateConversation;
 }
 
 export async function deleteAllConversations() {
@@ -83,5 +87,5 @@ export async function deleteAllConversations() {
   );
   deleteAllChats();
   _conversationsRepo.set([]);
-  return [];
+  return {} as ResponseDeleteAllConversation;
 }

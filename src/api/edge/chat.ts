@@ -2,7 +2,7 @@ import {
   CHAT_COMPLETION_CONFIG,
   CHAT_COMPLETION_URL,
 } from "@/configs/constants";
-import { ResponseGetChats } from "@/pages/api/chatgpt/chat";
+import { ResponseGetChats, ResponseSend } from "@/pages/api/chatgpt/chat";
 import { WebStorage } from "@/storage/webstorage";
 import {
   ChatCompletionRequestMessage,
@@ -30,7 +30,7 @@ export function saveChat(
 ) {
   const _chatRepo = new WebStorage<ResponseGetChats>("o:c");
   const _chats = _chatRepo.get<ResponseGetChats>() ?? [];
-  let nextIndex = 0;
+  let nextIndex = 1;
   for (const _index in _chats) {
     if ((_chats[_index].id ?? 0) >= nextIndex)
       nextIndex = (_chats[_index].id ?? 0) + 1;
@@ -58,11 +58,12 @@ export async function sendMessage(
     content: it.content,
     name: it.name,
   })) as ChatCompletionRequestMessage[];
-  messages.push({
+  const _message: ChatCompletionRequestMessage = {
     role: "user",
     content: message,
     name: name ?? undefined,
-  });
+  };
+  messages.push(_message);
   const apiKey = getApiKey();
   if (!apiKey) throw new Error("API key not set.");
   try {
@@ -85,8 +86,8 @@ export async function sendMessage(
     if (choices.length === 0 || !choices[0].message) {
       throw new Error("No response from OpenAI");
     }
-
-    return [saveChat(conversationId, choices[0].message)];
+    saveChat(conversationId, _message);
+    return [saveChat(conversationId, choices[0].message)] as ResponseSend;
   } catch (e) {
     console.error(e);
   }
