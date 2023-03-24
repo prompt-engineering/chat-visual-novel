@@ -39,5 +39,9 @@
   "restaurant": "Restaurant",
   "street": "Street",
   "school": "School",
-  "copyright_note": "Images pre-generated using Stable Diffusion with AbyssOrangeMix3"
+  "copyright_note": "Images pre-generated using Stable Diffusion with AbyssOrangeMix3",
+  "select_api_type": "Please select how would you like to access ChatGPT:",
+  "select_api_type_note": "- If you choose to use client-side, please make sure you can access OpenAI server. OpenAI may block users accessing outside of allowed areas.\n- If you choose to access via our server, we cannot gurantee a smooth experience as OpenAI would rate limit our server.",
+  "client": "Client-side",
+  "server": "Server-side"
 }

@@ -1,7 +1,10 @@
 import fetch from "node-fetch";
 import { SITE_INTERNAL_HEADER_URL } from "@/configs/constants";
+import { WebStorage } from "@/storage/webstorage";
+import * as EdgeUser from "./edge/user";
 
 export async function logout() {
+  if (EdgeUser.isClientSideOpenAI()) return EdgeUser.logout();
   const response = await fetch("/api/chatgpt/user", {
     method: "POST",
     body: JSON.stringify({
@@ -12,6 +15,7 @@ export async function logout() {
 }
 
 export async function login(key: string) {
+  if (EdgeUser.isClientSideOpenAI()) return EdgeUser.saveApiKey(key);
   const response = await fetch("/api/chatgpt/user", {
     method: "POST",
     body: JSON.stringify({
@@ -31,6 +35,8 @@ export async function login(key: string) {
 export async function isLoggedIn(hashedKey?: string) {
   if (typeof window !== "undefined" && typeof document !== "undefined") {
     // Client-side
+    if (EdgeUser.isClientSideOpenAI())
+      return EdgeUser.getApiKey() ? true : false;
     const response = await fetch("/api/chatgpt/verify", {
       method: "POST",
       body: hashedKey ?? "NOPE",

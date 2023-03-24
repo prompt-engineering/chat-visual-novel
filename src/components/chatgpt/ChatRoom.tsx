@@ -8,10 +8,7 @@ import content from "@/assets/images/content.png";
 import send from "@/assets/icons/send.svg?url";
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import styled from "@emotion/styled";
-import type {
-  RequestGetConversations,
-  ResponseGetConversations,
-} from "@/pages/api/chatgpt/conversation";
+import type { ResponseGetConversations } from "@/pages/api/chatgpt/conversation";
 import { ResponseGetChats, ResponseSend } from "@/pages/api/chatgpt/chat";
 import { BeatLoader } from "react-spinners";
 import { useDebouncedCallback } from "use-debounce";
@@ -20,6 +17,8 @@ import * as ChatAPI from "@/api/chat";
 import * as ConversationAPI from "@/api/conversation";
 import * as UserAPI from "@/api/user";
 import SimpleMarkdown from "@/components/markdown/SimpleMarkdown";
+import { isClientSideOpenAI } from "@/api/edge/user";
+import * as EdgeChatAPI from "@/api/edge/chat";
 
 const ChatInput = styled("input")`
   background: #ffffff;
@@ -110,17 +109,7 @@ export const ChatRoom = ({
   useEffect(() => {
     (async () => {
       try {
-        const response = await fetch("/api/chatgpt/conversation", {
-          method: "POST",
-          body: JSON.stringify({
-            action: "get_conversations",
-          } as RequestGetConversations),
-        });
-        const data = (await response.json()) as ResponseGetConversations;
-        if (!response.ok) {
-          alert("Error: " + JSON.stringify((data as any).error));
-          return;
-        }
+        const data = (await ConversationAPI.getConversations()) ?? [];
         setConversations(data);
       } catch (error) {
         setConversations([]);
@@ -258,6 +247,23 @@ export const ChatRoom = ({
       ] as ResponseSend;
 
       setChatHistory([...updatedHistory]);
+
+      if (isClientSideOpenAI()) {
+        const _messages = await EdgeChatAPI.sendMessage(
+          currentConversation as number,
+          message
+        );
+        setDisable(false);
+        if (_messages && _messages.length) {
+          setChatHistory([...updatedHistory, ..._messages]);
+        } else {
+          setDisable(false);
+          setChatHistory([
+            ...updatedHistory.slice(0, updatedHistory.length - 1),
+          ]);
+        }
+        return;
+      }
 
       const data = await ChatAPI.sendMsgWithStreamRes(
         currentConversation as number,

@@ -39,5 +39,9 @@
   "restaurant": "餐厅",
   "street": "街头",
   "school": "学校",
-  "copyright_note": "图片由 Stable Diffusion 生成。模型：AbyssOrangeMix3"
+  "copyright_note": "图片由 Stable Diffusion 生成。模型：AbyssOrangeMix3",
+  "select_api_type": "请选择你将如何访问 ChatGPT：",
+  "select_api_type_note": "- 如果你选择客户端模式，请确保你可以连接 OpenAI 服务器。在未经 OpenAI 许可的区域使用可能会造成封号。\n- 如果你选择服务器模式，在忙时 OpenAI 会对我们的服务器限流，我们将无法保证体验的稳定性。",
+  "client": "客户端模式",
+  "server": "服务器模式"
 }

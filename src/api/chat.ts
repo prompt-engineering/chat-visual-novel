@@ -5,8 +5,12 @@ import {
   ResponseSend,
 } from "@/pages/api/chatgpt/chat";
 import nodeFetch from "node-fetch";
+import { isClientSideOpenAI } from "@/api/edge/user";
+import * as EdgeChat from "@/api/edge/chat";
 
 export async function getChatsByConversationId(conversationId: number) {
+  if (isClientSideOpenAI())
+    return EdgeChat.getChatsByConversationId(conversationId);
   const response = await nodeFetch("/api/chatgpt/chat", {
     method: "POST",
     body: JSON.stringify({
@@ -29,15 +33,17 @@ export async function getChatsByConversationId(conversationId: number) {
 }
 
 export async function sendMessage(
-  conversageId: number,
+  conversationId: number,
   message: string,
   name?: string
 ) {
+  if (isClientSideOpenAI())
+    return await EdgeChat.sendMessage(conversationId, message, name);
   const response = await nodeFetch("/api/chatgpt/chat", {
     method: "POST",
     body: JSON.stringify({
       action: "send",
-      conversation_id: conversageId,
+      conversation_id: conversationId,
       messages: [
         {
           role: "user",
@@ -58,7 +64,7 @@ export async function sendMessage(
 }
 
 export async function sendMsgWithStreamRes(
-  conversageId: number,
+  conversationId: number,
   message: string,
   name?: string
 ) {
@@ -67,7 +73,7 @@ export async function sendMsgWithStreamRes(
     headers: { Accept: "text/event-stream" },
     body: JSON.stringify({
       action: "send_stream",
-      conversation_id: conversageId,
+      conversation_id: conversationId,
       messages: [
         {
           role: "user",

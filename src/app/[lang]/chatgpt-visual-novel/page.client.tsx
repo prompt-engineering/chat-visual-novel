@@ -179,6 +179,14 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     setPromptQueue(promptQueue);
   }, [conversationId, promptQueue]);
 
+  const apiTypes = ["client", "server"];
+  const [apiType, setApiType] = useState("client");
+  useEffect(() => {
+    if (apiType) {
+      window.sessionStorage.setItem("o:t", JSON.stringify(apiType));
+    }
+  }, [apiType]);
+
   const currentSpeaker: Speaker | undefined = useMemo(() => {
     if (!scene) return;
     if (!scene.speaker) return;
@@ -453,6 +461,20 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
               {genres.map((storyGenre) => (
                 <option key={storyGenre} value={storyGenre}>
                   {upperFirst(dict[storyGenre])}
+                </option>
+              ))}
+            </Select>
+            <Heading size="xs" mt="8">{dict["select_api_type"]}</Heading>
+            <Text style={{
+              fontSize: "0.8rem",
+              color: "grey",
+              whiteSpace: "pre-line",
+              marginTop: "0.5rem"
+            }}>{dict["select_api_type_note"]}</Text>
+            <Select mt={4} onChange={e => setApiType(e.target.value)}>
+              {apiTypes.map((_apiType) => (
+                <option key={_apiType} value={_apiType}>
+                  {upperFirst(dict[_apiType])}
                 </option>
               ))}
             </Select>

@@ -4,11 +4,38 @@ import {
   RequestCreateConversation,
   RequestDeleteAllConversation,
   RequestDeleteConversation,
+  RequestGetConversations,
+  ResponseGetConversations,
   ResponseCreateConversation,
   ResponseDeleteAllConversation,
 } from "@/pages/api/chatgpt/conversation";
+import { isClientSideOpenAI } from "@/api/edge/user";
+import * as EdgeConversation from "@/api/edge/conversation";
+
+export async function getConversations() {
+  if (isClientSideOpenAI()) return EdgeConversation.getConversations();
+  const response = await fetch("/api/chatgpt/conversation", {
+    method: "POST",
+    body: JSON.stringify({
+      action: "get_conversations",
+    } as RequestGetConversations),
+  });
+  const data = (await response.json()) as ResponseGetConversations;
+  if (!response.ok) {
+    alert("Error: " + JSON.stringify((data as any).error));
+    return;
+  }
+
+  if (data == null) {
+    alert("Error(createConversation): sOmeTHiNg wEnT wRoNg");
+    return;
+  }
+
+  return data;
+}
 
 export async function createConversation(name?: string) {
+  if (isClientSideOpenAI()) return EdgeConversation.createConversation(name);
   const response = await fetch("/api/chatgpt/conversation", {
     method: "POST",
     body: JSON.stringify({
@@ -34,6 +61,8 @@ export async function changeConversationName(
   conversationId: number,
   name: string
 ) {
+  if (isClientSideOpenAI())
+    return EdgeConversation.changeConversationName(conversationId, name);
   const response = await fetch("/api/chatgpt/conversation", {
     method: "POST",
     body: JSON.stringify({
@@ -57,6 +86,8 @@ export async function changeConversationName(
 }
 
 export async function deleteConversation(conversationId: number) {
+  if (isClientSideOpenAI())
+    return EdgeConversation.deleteConversation(conversationId);
   const response = await fetch("/api/chatgpt/conversation", {
     method: "POST",
     body: JSON.stringify({
@@ -79,6 +110,7 @@ export async function deleteConversation(conversationId: number) {
 }
 
 export async function deleteAllConversations() {
+  if (isClientSideOpenAI()) return EdgeConversation.deleteAllConversations();
   const response = await fetch("/api/chatgpt/conversation", {
     method: "POST",
     body: JSON.stringify({
