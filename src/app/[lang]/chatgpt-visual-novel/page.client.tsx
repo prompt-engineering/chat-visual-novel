@@ -180,7 +180,11 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   }, [conversationId, promptQueue]);
 
   const apiTypes = ["client", "server"];
-  const [apiType, setApiType] = useState("client");
+  const [apiType, setApiType] = useState(
+    window.sessionStorage.getItem("o:t")
+      ? JSON.parse(window.sessionStorage.getItem("o:t") ?? '"client"')
+      : "client"
+  );
   useEffect(() => {
     if (apiType) {
       window.sessionStorage.setItem("o:t", JSON.stringify(apiType));
@@ -457,21 +461,31 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
           </CardHeader>
           <CardBody maxH="320px" overflow="auto" minW="320px">
             <Heading size="xs">{dict["select_genre"]}</Heading>
-            <Select mt={4} onChange={handleGenreChange}>
+            <Select mt={4} onChange={handleGenreChange} value={dict[genre]}>
               {genres.map((storyGenre) => (
                 <option key={storyGenre} value={storyGenre}>
                   {upperFirst(dict[storyGenre])}
                 </option>
               ))}
             </Select>
-            <Heading size="xs" mt="8">{dict["select_api_type"]}</Heading>
-            <Text style={{
-              fontSize: "0.8rem",
-              color: "grey",
-              whiteSpace: "pre-line",
-              marginTop: "0.5rem"
-            }}>{dict["select_api_type_note"]}</Text>
-            <Select mt={4} onChange={e => setApiType(e.target.value)}>
+            <Heading size="xs" mt="8">
+              {dict["select_api_type"]}
+            </Heading>
+            <Text
+              style={{
+                fontSize: "0.8rem",
+                color: "grey",
+                whiteSpace: "pre-line",
+                marginTop: "0.5rem",
+              }}
+            >
+              {dict["select_api_type_note"]}
+            </Text>
+            <Select
+              mt={4}
+              onChange={(e) => setApiType(e.target.value)}
+              value={apiType}
+            >
               {apiTypes.map((_apiType) => (
                 <option key={_apiType} value={_apiType}>
                   {upperFirst(dict[_apiType])}

@@ -5,12 +5,6 @@ export function isClientSideOpenAI() {
     // Client-side
     const _storage = new WebStorage<string>("o:t", "sessionStorage");
     const _type = _storage.get<string>();
-    console.log(
-      "isClientSideOpenAI",
-      _type && _type == "client" ? true : false,
-      _type,
-      _storage
-    );
     return _type && _type == "client" ? true : false;
   }
   return false;

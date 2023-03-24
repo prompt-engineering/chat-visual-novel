@@ -53,7 +53,6 @@ export async function sendMessage(
   message: string,
   name?: string
 ) {
-  console.log("EdgeChat.sendMessage");
   const messages = getChatsByConversationId(conversationId).map((it) => ({
     role: it.role,
     content: it.content,
@@ -79,7 +78,6 @@ export async function sendMessage(
       }),
     });
     const json = await response.json();
-    console.log(json);
     if (!response.ok) {
       throw new Error(json);
     }
