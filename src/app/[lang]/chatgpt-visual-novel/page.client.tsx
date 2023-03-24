@@ -9,6 +9,7 @@ import {
   SetStateAction,
   Dispatch,
   CSSProperties,
+  createRef,
 } from "react";
 import {
   Box,
@@ -19,10 +20,8 @@ import {
   Flex,
   Text,
   Select,
-  useDisclosure,
   Heading,
   VStack,
-  Image,
 } from "@chakra-ui/react";
 import assets from "@/assets/assets.json";
 import { upperFirst } from "lodash-es";
@@ -33,6 +32,8 @@ import * as UserAPI from "@/api/user";
 import { sendMessage } from "@/api/chat";
 import { BeatLoader } from "react-spinners";
 import { ClickPromptBird } from "@/components/ClickPrompt/ClickPromptButton";
+import VolumeIcon from "@/assets/icons/volume.svg?url";
+import Image from "next/image";
 
 type Scene = {
   speaker: string;
@@ -61,14 +62,20 @@ type KV<T> = {
   [key: string]: T;
 };
 
+type Location = {
+  image: string;
+  bgm?: string;
+};
+
 type Config = {
   genres: string[];
   player?: Character;
   playerGender: string;
   girls?: Character[];
   characters?: KV<Character>;
-  places: KV<string>;
+  places: KV<Location>;
   imageSettings?: CSSProperties;
+  tts?: KV<TTS>;
 };
 
 type Speaker = {
@@ -76,7 +83,18 @@ type Speaker = {
   imageSettings?: CSSProperties;
 };
 
-function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
+type TTS = {
+  method?: string;
+  url: string;
+  params?: {
+    speaker: string;
+    text: string;
+    additionalParams?: string;
+  };
+  voices?: string[];
+};
+
+function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   const dict = i18n.dict;
   const config = JSON.parse(JSON.stringify(assets)) as Config;
   const genres = config.genres;
@@ -104,11 +122,14 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     }
   }
   const _locationMap: KV<string> = {};
+  const _bgmMap: { [key: string]: string | undefined } = {};
+  const bgmRef = createRef<HTMLAudioElement>();
   const _locationNames: string[] = [];
   for (const _key in places) {
-    _locationMap[_key.toLowerCase()] = places[_key];
+    _locationMap[_key.toLowerCase()] = places[_key].image;
     if (_key.toLowerCase() in dict) {
-      _locationMap[dict[_key.toLowerCase()].toLowerCase()] = places[_key];
+      _locationMap[dict[_key.toLowerCase()].toLowerCase()] = places[_key].image;
+      _bgmMap[dict[_key.toLowerCase()].toLowerCase()] = places[_key].bgm;
       _locationNames.push(dict[_key.toLowerCase()]);
     } else {
       _locationNames.push(_key);
@@ -117,8 +138,6 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   const [characterMap, setCharacterMap] = useState(_characterMap);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogueLoading, setIsDialogueLoading] = useState(false);
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [hasLogin, setHasLogin] = useState(false);
   const [genre, setGenre] = useState(dict[genres[0]]);
   const [cast, setCast] = useState({} as Cast);
   const [scene, setScene] = useState({} as Scene);
@@ -197,6 +216,36 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     }
   }, [scene, cast, characterMap, player]);
 
+  const voiceRef = createRef<HTMLAudioElement>();
+  const voice: string | undefined = useMemo(() => {
+    if (
+      config &&
+      config.tts &&
+      locale in config.tts &&
+      (!config.tts[locale].method || config.tts[locale].method == "GET")
+    ) {
+      const _tts = config.tts[locale];
+      if (_tts.url && _tts.params && _tts.params.speaker && _tts.params.text) {
+        if (scene && scene.speaker && scene.dialogue && scene.dialogue.length) {
+          if (
+            _tts.voices &&
+            _tts.voices.indexOf(scene.speaker) == -1 &&
+            _tts.voices.indexOf(dict[scene.speaker.toLowerCase()]) == -1
+          ) {
+            return;
+          }
+          const _params = _tts.params;
+          const _voice = encodeURI(
+            `${_tts.url}?${_params.speaker}=${scene.speaker}&${_params.text}=${
+              scene.dialogue
+            }${_params.additionalParams ?? ""}`
+          );
+          return _voice;
+        }
+      }
+    }
+  }, [config.tts, scene.speaker, scene.dialogue, locale]);
+
   const handleGenreChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
     const _genre = genres.indexOf(e.target.value)
       ? dict[e.target.value]
@@ -217,13 +266,11 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     try {
       const isLoggedIn = await UserAPI.isLoggedIn();
       if (!isLoggedIn) {
-        onOpen();
         if (_prompt.setLoading) _prompt.setLoading(false);
         return;
       }
     } catch (e) {
       console.log(e);
-      setHasLogin(false);
       return;
     }
     if (conversationId) {
@@ -248,14 +295,13 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
   ) => {
     try {
       const result = response[0].content.trim();
-      const jsonStart = result.indexOf("{");
-      const jsonEnd = result.lastIndexOf("}");
+      const jsonRegex = /{.*}/s; // s flag for dot to match newline characters
+      const jsonMatch = result.match(jsonRegex);
       let json = {};
-      if (jsonStart >= 0 && jsonEnd >= 0) {
-        const jsonStr = result.substring(jsonStart, jsonEnd + 1);
-        json = JSON.parse(jsonStr);
+      if (jsonMatch) {
+        json = JSON.parse(jsonMatch[0]);
       } else {
-        throw new Error("Invalid json");
+        throw new Error("Invalid JSON returned.");
       }
       if ("main" in json && "others" in json) {
         const cast = json as Cast;
@@ -316,6 +362,13 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
     setAnswer(e.target.innerText);
   };
 
+  const handleStartClick: MouseEventHandler<HTMLButtonElement> = (e: any) => {
+    if (bgmRef && bgmRef.current && bgmRef.current.src) {
+      bgmRef.current.play();
+      bgmRef.current.volume = 0.4;
+    }
+  };
+
   return (
     <Box
       style={{
@@ -332,7 +385,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
           scene.location &&
           scene.location.toLowerCase() in _locationMap
             ? _locationMap[scene.location.toLowerCase()]
-            : places[Object.keys(places)[0]]
+            : places[Object.keys(places)[0]].image
         }
         alt={scene.location ?? ""}
         style={{
@@ -344,6 +397,16 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
           objectFit: "cover",
           zIndex: "-2",
         }}
+        fill
+      />
+      <audio
+        loop
+        src={
+          scene && scene.location && scene.location.toLowerCase() in _bgmMap
+            ? _bgmMap[scene.location.toLowerCase()]
+            : places[Object.keys(places)[0]].bgm
+        }
+        ref={bgmRef}
       />
       {isLoading ? (
         <Card
@@ -415,6 +478,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                   updateConversationId={updateConversationId}
                   conversationName={genre}
                   btnText={dict["start"]}
+                  onClick={handleStartClick}
                 />
               </Box>
             </Flex>
@@ -454,6 +518,27 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
             </Box>
           )}
           {scene.dialogue}
+          {voice && (
+            <Text
+              style={{
+                position: "relative",
+                padding: "0 1rem",
+                marginLeft: "0.5rem",
+                cursor: "pointer",
+                display: "inline",
+                filter: "invert(100%)",
+              }}
+            >
+              <Image
+                src={VolumeIcon}
+                alt={scene.speaker}
+                fill
+                onClick={() => {
+                  voiceRef.current?.play();
+                }}
+              />
+            </Text>
+          )}
           <VStack
             paddingTop="1rem"
             paddingRight="18px"
@@ -514,13 +599,14 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
                 fontSize: "0.5rem",
                 color: "lightgray",
                 paddingTop: "0.5rem",
+                whiteSpace: "pre-line",
               }}
             >
               {dict["copyright_note"]}
             </Text>
           )}
           {currentSpeaker && (
-            <Image
+            <img
               src={currentSpeaker.image ?? ""}
               alt={scene.speaker ?? ""}
               style={{
@@ -531,6 +617,7 @@ function ChatGptVisualNovel({ i18n }: GeneralI18nProps) {
               }}
             />
           )}
+          {voice && <audio autoPlay src={voice} ref={voiceRef} />}
         </Box>
       )}
     </Box>

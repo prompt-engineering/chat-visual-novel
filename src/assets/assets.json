@@ -40,12 +40,24 @@
     }
   ],
   "places": {
-    "street": "https://assets.chatvisualnovel.com/00024-3109134467.png",
-    "room": "https://assets.chatvisualnovel.com/00115-1693129910.png",
-    "lobby": "https://assets.chatvisualnovel.com/00007-2952547515.png",
-    "garden": "https://assets.chatvisualnovel.com/00117-1865753899.png",
-    "restaurant": "https://assets.chatvisualnovel.com/00146-2156326714.png",
-    "school": "https://assets.chatvisualnovel.com/00068-792831435.png"
+    "street": {
+      "image": "https://assets.chatvisualnovel.com/00024-3109134467.png"
+    },
+    "room": {
+      "image": "https://assets.chatvisualnovel.com/00115-1693129910.png"
+    },
+    "lobby": {
+      "image": "https://assets.chatvisualnovel.com/00007-2952547515.png"
+    },
+    "garden": {
+      "image": "https://assets.chatvisualnovel.com/00117-1865753899.png"
+    },
+    "restaurant": {
+      "image": "https://assets.chatvisualnovel.com/00146-2156326714.png"
+    },
+    "school": {
+      "image": "https://assets.chatvisualnovel.com/00068-792831435.png"
+    }
   },
   "imageSettings": {
     "left": "50%",
