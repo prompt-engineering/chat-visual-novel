@@ -14,14 +14,7 @@ import { getApiKey } from "./user";
 export function getChatsByConversationId(conversationId: number) {
   const _chatRepo = new WebStorage<ResponseGetChats>("o:c");
   const _chats = _chatRepo.get<ResponseGetChats>() ?? [];
-  const _result: ResponseGetChats = [];
-  for (const _index in _chats) {
-    const _chat = _chats[_index];
-    if (_chat.conversation_id == conversationId) {
-      _result.push(_chat);
-    }
-  }
-  return _result;
+  return _chats.filter((e) => e.conversation_id == conversationId);
 }
 
 export function saveChat(
@@ -96,17 +89,8 @@ export async function sendMessage(
 export function deleteChatsByConversationId(conversationId: number) {
   const _chatRepo = new WebStorage<ResponseGetChats>("o:c");
   const _chats = _chatRepo.get<ResponseGetChats>() ?? [];
-  const _result: number[] = [];
-  for (const _index in _chats) {
-    const _chat = _chats[_index];
-    if (_chat.conversation_id == conversationId) {
-      _result.push(parseInt(_index));
-    }
-  }
-  for (const _index in _result) {
-    _chats.splice(_result[_index], 1);
-  }
-  _chatRepo.set(_chats);
+  const _filtered = _chats.filter((e) => e.conversation_id != conversationId);
+  _chatRepo.set(_filtered);
 }
 
 export function deleteAllChats() {
