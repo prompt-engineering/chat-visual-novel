@@ -43,7 +43,7 @@ export function createConversation(name?: string) {
   const _newConversation = {
     id: nextIndex,
     name: name ?? "Default name",
-    created_at: Date.now().toString(),
+    created_at: new Date().toISOString(),
     user_id: 0,
     deleted: 0,
   };

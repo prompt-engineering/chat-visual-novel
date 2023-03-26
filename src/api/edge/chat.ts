@@ -34,7 +34,7 @@ export function saveChat(
     role: message.role as string,
     content: message.content,
     name: undefined,
-    created_at: Date.now().toString(),
+    created_at: new Date().toISOString(),
   };
   _chats.push(_chat);
   _chatRepo.set(_chats);

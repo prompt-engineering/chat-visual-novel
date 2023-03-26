@@ -8,7 +8,6 @@ import {
   MouseEventHandler,
   SetStateAction,
   Dispatch,
-  CSSProperties,
   createRef,
 } from "react";
 import {
@@ -17,9 +16,7 @@ import {
   CardBody,
   CardFooter,
   CardHeader,
-  Flex,
   Text,
-  Select,
   Heading,
   VStack,
 } from "@chakra-ui/react";
@@ -27,72 +24,17 @@ import assets from "@/assets/assets.json";
 import { upperFirst } from "lodash-es";
 import ExecutePromptButton from "@/components/ClickPrompt/ExecutePromptButton";
 import { ResponseSend } from "@/pages/api/chatgpt/chat";
-import CopyComponent from "@/components/CopyComponent";
 import * as UserAPI from "@/api/user";
 import { sendMessage } from "@/api/chat";
 import { BeatLoader } from "react-spinners";
 import { ClickPromptBird } from "@/components/ClickPrompt/ClickPromptButton";
 import VolumeIcon from "@/assets/icons/volume.svg?url";
 import Image from "next/image";
-
-type Scene = {
-  speaker: string;
-  dialogue: string;
-  mood: string;
-  location: string;
-  answers?: string[];
-};
-
-type CharacterName = {
-  name: string;
-};
-
-type Cast = {
-  main: CharacterName;
-  others: CharacterName[];
-};
-
-type Character = {
-  images: KV<string>;
-  imageSettings?: CSSProperties;
-  isPlayer?: boolean;
-};
-
-type KV<T> = {
-  [key: string]: T;
-};
-
-type Location = {
-  image: string;
-  bgm?: string;
-};
-
-type Config = {
-  genres: string[];
-  player?: Character;
-  playerGender: string;
-  girls?: Character[];
-  characters?: KV<Character>;
-  places: KV<Location>;
-  imageSettings?: CSSProperties;
-  tts?: KV<TTS>;
-};
-
-type Speaker = {
-  image: string;
-  imageSettings?: CSSProperties;
-};
-
-type TTS = {
-  method?: string;
-  url: string;
-  params?: {
-    speaker: string;
-    text: string;
-    additionalParams?: string;
-  };
-  voices?: string[];
-};
+import { Cast, Character, Config, KV, Scene, Speaker } from "@/configs/type";
+import { SpeakerCard } from "@/components/Engine/SpeakerCard";
+import { NewStoryMenu } from "@/components/Engine/NewStoryMenu";
+import { MainMenu } from "@/components/Engine/MainMenu";
+import { LoadStoryMenu } from "@/components/Engine/LoadStoryMenu";
 
 function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   const dict = i18n.dict;
@@ -136,6 +78,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     }
   }
   const [characterMap, setCharacterMap] = useState(_characterMap);
+  const [engineState, setEngineState] = useState("main_menu");
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogueLoading, setIsDialogueLoading] = useState(false);
   const [genre, setGenre] = useState(dict[genres[0]]);
@@ -306,9 +249,10 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     if (_prompt.setLoading) _prompt.setLoading(false);
   };
 
-  const handleResponse = async (
+  const handleResponse = (
     response: ResponseSend,
-    setLoading?: Dispatch<SetStateAction<boolean>>
+    setLoading?: Dispatch<SetStateAction<boolean>>,
+    nextAction?: boolean
   ) => {
     try {
       const result = response[0].content.trim();
@@ -349,7 +293,8 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
         }${JSON.stringify(moods)}\n${dict["prompt_places"]}${JSON.stringify(
           _locationNames
         )}\n${dict["prompt_end"]}`;
-        setPromptQueue([...promptQueue, { prompt: storyPrompt, setLoading }]);
+        if (nextAction)
+          setPromptQueue([...promptQueue, { prompt: storyPrompt, setLoading }]);
       } else if (
         "speaker" in json &&
         "dialogue" in json &&
@@ -359,6 +304,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
         const newScene = json as Scene;
         setAnswer(undefined);
         setScene(newScene);
+        setEngineState("story");
       } else {
         console.log(json);
       }
@@ -379,7 +325,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     setAnswer(e.target.innerText);
   };
 
-  const handleStartClick: MouseEventHandler<HTMLButtonElement> = (e: any) => {
+  const handleOnStart: MouseEventHandler<HTMLButtonElement> = (e: any) => {
     if (bgmRef && bgmRef.current && bgmRef.current.src) {
       bgmRef.current.play();
       bgmRef.current.volume = 0.4;
@@ -452,210 +398,174 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
             <BeatLoader style={{ margin: "0 auto" }} />
           </CardFooter>
         </Card>
-      ) : !(scene && scene.speaker) ? (
-        <Card
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <CardHeader>
-            <Heading size="md">{dict["title"]}</Heading>
-          </CardHeader>
-          <CardBody maxH="320px" overflow="auto" minW="320px">
-            <Heading size="xs">{dict["select_genre"]}</Heading>
-            <Select mt={4} onChange={handleGenreChange} value={dict[genre]}>
-              {genres.map((storyGenre) => (
-                <option key={storyGenre} value={storyGenre}>
-                  {upperFirst(dict[storyGenre])}
-                </option>
-              ))}
-            </Select>
-            <Heading size="xs" mt="8">
-              {dict["select_api_type"]}
-            </Heading>
-            <Text
-              style={{
-                fontSize: "0.8rem",
-                color: "grey",
-                whiteSpace: "pre-line",
-                marginTop: "0.5rem",
-              }}
-            >
-              {dict["select_api_type_note"]}
-            </Text>
-            <Select mt={4} onChange={handleApiTypeChange} value={apiType}>
-              {apiTypes.map((_apiType) => (
-                <option key={_apiType} value={_apiType}>
-                  {upperFirst(dict[_apiType])}
-                </option>
-              ))}
-            </Select>
-          </CardBody>
-          <CardFooter>
-            <Flex
-              w="100%"
-              mr="18px"
-              flexGrow={"column"}
-              justifyContent="space-between"
-            >
-              <Box>
-                <CopyComponent value={prompt} />
-              </Box>
-              <Box>
-                <ExecutePromptButton
-                  text={prompt}
-                  name="promptBtn"
-                  handleResponse={(response) =>
-                    handleResponse(response, setIsLoading)
-                  }
-                  conversationId={conversationId}
-                  updateConversationId={updateConversationId}
-                  conversationName={genre}
-                  btnText={dict["start"]}
-                  onClick={handleStartClick}
-                />
-              </Box>
-            </Flex>
-          </CardFooter>
-        </Card>
       ) : (
-        <Box
-          style={{
-            borderRadius: "10px 10px 0 0",
-            background: "rgba(0,128,128,0.8)",
-            color: "white",
-            fontSize: "1.2rem",
-            padding: "1rem",
-            width: "100%",
-            position: "absolute",
-            left: "0",
-            bottom: "0",
-          }}
-        >
-          {scene.speaker && (
+        <>
+          {engineState == "main_menu" && (
+            <MainMenu
+              dict={dict}
+              apiType={apiType}
+              apiTypes={apiTypes}
+              handleApiTypeChange={handleApiTypeChange}
+              handleOnNewStory={() => setEngineState("new_story")}
+              handleOnContinueStory={() => setEngineState("continue_story")}
+            />
+          )}
+          {engineState == "new_story" && (
+            <NewStoryMenu
+              dict={dict}
+              genre={genre}
+              genres={genres}
+              handleGenreChange={handleGenreChange}
+              prompt={prompt}
+              handleResponse={(response) =>
+                handleResponse(response, setIsLoading, true)
+              }
+              handleUpdateConversationId={updateConversationId}
+              handleOnStart={handleOnStart}
+              handleReturn={() => setEngineState("main_menu")}
+            />
+          )}
+          {engineState == "continue_story" && (
+            <LoadStoryMenu
+              dict={dict}
+              locale={locale}
+              handleResponse={handleResponse}
+              handleSetConversationId={setConversationId}
+              handleReturn={() => setEngineState("main_menu")}
+            />
+          )}
+          {engineState == "story" && scene && scene.speaker && (
             <Box
               style={{
                 borderRadius: "10px 10px 0 0",
                 background: "rgba(0,128,128,0.8)",
                 color: "white",
                 fontSize: "1.2rem",
-                fontWeight: "bold",
-                textAlign: "center",
-                padding: "0.4rem 1rem 0 1rem",
-                height: "2.2rem",
+                padding: "1rem",
+                width: "100%",
                 position: "absolute",
-                left: "1rem",
-                top: "-2.2rem",
+                left: "0",
+                bottom: "0",
               }}
             >
-              {upperFirst(scene.speaker)}
+              {scene.speaker && (
+                <Box
+                  style={{
+                    borderRadius: "10px 10px 0 0",
+                    background: "rgba(0,128,128,0.8)",
+                    color: "white",
+                    fontSize: "1.2rem",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    padding: "0.4rem 1rem 0 1rem",
+                    height: "2.2rem",
+                    position: "absolute",
+                    left: "1rem",
+                    top: "-2.2rem",
+                  }}
+                >
+                  {upperFirst(scene.speaker)}
+                </Box>
+              )}
+              {scene.dialogue}
+              {voice && (
+                <Text
+                  style={{
+                    position: "relative",
+                    padding: "0 1rem",
+                    marginLeft: "0.5rem",
+                    cursor: "pointer",
+                    display: "inline",
+                    filter: "invert(100%)",
+                  }}
+                >
+                  <Image
+                    src={VolumeIcon}
+                    alt={scene.speaker}
+                    fill
+                    onClick={() => {
+                      voiceRef.current?.play();
+                    }}
+                  />
+                </Text>
+              )}
+              <VStack
+                paddingTop="1rem"
+                paddingRight="18px"
+                alignItems="end"
+                minH="60px"
+              >
+                {isDialogueLoading ? (
+                  <>
+                    {answer && <Box style={{ fontSize: "1rem" }}>{answer}</Box>}
+                    <BeatLoader color="white" />
+                  </>
+                ) : scene.answers && scene.answers.length > 0 ? (
+                  <>
+                    {scene.answers.map((_answer) => {
+                      return (
+                        <ExecutePromptButton
+                          key={_answer}
+                          loading={isDialogueLoading}
+                          text={
+                            dict["prompt_continue_with_answer"] +
+                            '"' +
+                            _answer +
+                            '"'
+                          }
+                          name="promptBtn"
+                          handleResponse={(response) =>
+                            handleResponse(response, setIsDialogueLoading)
+                          }
+                          conversationId={conversationId}
+                          updateConversationId={updateConversationId}
+                          btnText={_answer}
+                          handleLoadingStateChange={
+                            handleDialogueLoadingStateChange
+                          }
+                          onClick={handleAnswerClick}
+                        />
+                      );
+                    })}
+                  </>
+                ) : (
+                  <ExecutePromptButton
+                    loading={isDialogueLoading}
+                    text={dict["prompt_continue"]}
+                    name="promptBtn"
+                    handleResponse={(response) =>
+                      handleResponse(response, setIsDialogueLoading)
+                    }
+                    conversationId={conversationId}
+                    updateConversationId={updateConversationId}
+                    btnText={dict["continue"]}
+                    handleLoadingStateChange={handleDialogueLoadingStateChange}
+                  />
+                )}
+              </VStack>
+              {"copyright_note" in dict && (
+                <Text
+                  style={{
+                    fontSize: "0.5rem",
+                    color: "lightgray",
+                    paddingTop: "0.5rem",
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {dict["copyright_note"]}
+                </Text>
+              )}
+              <SpeakerCard
+                dict={dict}
+                imageSettings={config.imageSettings}
+                characterMap={characterMap}
+                speaker={currentSpeaker}
+                speakerName={scene.speaker ?? ""}
+              />
+              {voice && <audio autoPlay src={voice} ref={voiceRef} />}
             </Box>
           )}
-          {scene.dialogue}
-          {voice && (
-            <Text
-              style={{
-                position: "relative",
-                padding: "0 1rem",
-                marginLeft: "0.5rem",
-                cursor: "pointer",
-                display: "inline",
-                filter: "invert(100%)",
-              }}
-            >
-              <Image
-                src={VolumeIcon}
-                alt={scene.speaker}
-                fill
-                onClick={() => {
-                  voiceRef.current?.play();
-                }}
-              />
-            </Text>
-          )}
-          <VStack
-            paddingTop="1rem"
-            paddingRight="18px"
-            alignItems="end"
-            minH="60px"
-          >
-            {isDialogueLoading ? (
-              <>
-                {answer && <Box style={{ fontSize: "1rem" }}>{answer}</Box>}
-                <BeatLoader color="white" />
-              </>
-            ) : scene.answers && scene.answers.length > 0 ? (
-              <>
-                {scene.answers.map((_answer) => {
-                  return (
-                    <ExecutePromptButton
-                      key={_answer}
-                      loading={isDialogueLoading}
-                      text={
-                        dict["prompt_continue_with_answer"] +
-                        '"' +
-                        _answer +
-                        '"'
-                      }
-                      name="promptBtn"
-                      handleResponse={(response) =>
-                        handleResponse(response, setIsDialogueLoading)
-                      }
-                      conversationId={conversationId}
-                      updateConversationId={updateConversationId}
-                      btnText={_answer}
-                      handleLoadingStateChange={
-                        handleDialogueLoadingStateChange
-                      }
-                      onClick={handleAnswerClick}
-                    />
-                  );
-                })}
-              </>
-            ) : (
-              <ExecutePromptButton
-                loading={isDialogueLoading}
-                text={dict["prompt_continue"]}
-                name="promptBtn"
-                handleResponse={(response) =>
-                  handleResponse(response, setIsDialogueLoading)
-                }
-                conversationId={conversationId}
-                updateConversationId={updateConversationId}
-                btnText={dict["continue"]}
-                handleLoadingStateChange={handleDialogueLoadingStateChange}
-              />
-            )}
-          </VStack>
-          {"copyright_note" in dict && (
-            <Text
-              style={{
-                fontSize: "0.5rem",
-                color: "lightgray",
-                paddingTop: "0.5rem",
-                whiteSpace: "pre-line",
-              }}
-            >
-              {dict["copyright_note"]}
-            </Text>
-          )}
-          {currentSpeaker && (
-            <img
-              src={currentSpeaker.image ?? ""}
-              alt={scene.speaker ?? ""}
-              style={{
-                position: "absolute",
-                zIndex: "-1",
-                ...config.imageSettings,
-                ...currentSpeaker.imageSettings,
-              }}
-            />
-          )}
-          {voice && <audio autoPlay src={voice} ref={voiceRef} />}
-        </Box>
+        </>
       )}
     </Box>
   );

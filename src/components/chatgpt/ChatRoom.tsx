@@ -144,6 +144,7 @@ export const ChatRoom = ({
     }
 
     setConversations([data, ...conversations]);
+    if (data.id) setCurrentConversation(data.id);
     return data;
   }
 
@@ -204,6 +205,10 @@ export const ChatRoom = ({
   );
 
   async function deleteConversation(conversationId: number) {
+    if (conversationId == currentConversation) {
+      setCurrentConversation(null);
+      setChatHistory([]);
+    }
     const data = await ConversationAPI.deleteConversation(conversationId);
     if (!data) {
       return;
@@ -219,6 +224,8 @@ export const ChatRoom = ({
       return;
     }
     setConversations([]);
+    setCurrentConversation(null);
+    setChatHistory([]);
   }
   // FIXME anti-pattern, should use `useState`
   let codeMark = "";
