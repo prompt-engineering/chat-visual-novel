@@ -45,7 +45,7 @@ With these steps completed, your ChatVisualNovel will be deployed on Vercel with
 
 [assets.json](src/assets/assets.json)
 
-- When an item is marked with (i18). Either the key or value needs to be locale mapped in i18n configs.
+- When an item is marked with (i18n). Either the key or value needs to be locale mapped in i18n configs.
 
 ```typescript
 {
