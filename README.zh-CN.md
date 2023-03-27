@@ -5,9 +5,11 @@
 
 演示: https://chatvisualnovel.com/
 
-原神同人: https://genshin.chatvisualnovel.com/
+原神同人（AI语音）: https://genshin.chatvisualnovel.com/
 
 逆转裁判同人: https://ace.chatvisualnovel.com/
+
+![截图](https://chatvisualnovelassets.s3.us-west-2.amazonaws.com/images/screenshots/Screenshot+2023-03-27+at+10.05.36.png)
 
 [English](./README.md) | 简体中文
 
