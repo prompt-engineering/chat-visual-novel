@@ -44,8 +44,8 @@ export type Config = {
 };
 
 export type Speaker = {
-  image: string;
-  imageSettings?: CSSProperties;
+  name: string;
+  mood: string;
 };
 
 export type TTS = {

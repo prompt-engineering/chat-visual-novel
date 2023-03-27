@@ -8,7 +8,6 @@ export type SpeakerProps = {
   imageSettings?: CSSProperties;
   characterMap: KV<Character>;
   speaker?: Speaker;
-  speakerName?: string;
 };
 
 export function SpeakerCard(props: SpeakerProps) {
@@ -41,9 +40,9 @@ export function SpeakerCard(props: SpeakerProps) {
                   ...props.imageSettings,
                   ...character.imageSettings,
                   display:
-                    props.speakerName?.toLowerCase() ==
+                    props.speaker?.name.toLowerCase() ==
                       characterName.toLowerCase() &&
-                    props.speaker?.image == image
+                    props.speaker?.mood.toLowerCase() == mood
                       ? "block"
                       : "none",
                 }}

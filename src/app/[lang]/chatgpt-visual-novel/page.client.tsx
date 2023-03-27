@@ -143,12 +143,11 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     if (!scene) return;
     if (!scene.speaker) return;
     const speaker = scene.speaker.toLowerCase();
+    const mood = scene.mood.toLowerCase();
     if (speaker in characterMap)
       return {
-        image:
-          characterMap[speaker].images[scene.mood.toLowerCase()] ??
-          characterMap[speaker].images["neutral"],
-        imageSettings: characterMap[speaker].imageSettings,
+        name: speaker,
+        mood: mood in characterMap[speaker].images ? mood : "neutral",
       };
     if (
       speaker == cast.main.name.toLowerCase() ||
@@ -159,18 +158,11 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
         mainCharacterName.toLowerCase() in characterMap
       ) {
         return {
-          image:
-            characterMap[mainCharacterName.toLowerCase()].images[
-              scene.mood.toLowerCase()
-            ] ??
-            characterMap[mainCharacterName.toLowerCase()].images["neutral"],
-          imageSettings: characterMap[speaker].imageSettings,
-        };
-      } else if (player) {
-        return {
-          image:
-            player.images[scene.mood.toLowerCase()] ?? player.images["neutral"],
-          imageSettings: player.imageSettings,
+          name: mainCharacterName.toLowerCase(),
+          mood:
+            mood in characterMap[mainCharacterName.toLowerCase()].images
+              ? mood
+              : "neutral",
         };
       }
     }
@@ -279,6 +271,9 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
               newCharacterMap[_name] = girls[_length];
             }
           }
+        }
+        if (!(cast.main.name.toLowerCase() in _characterMap) && player) {
+          newCharacterMap[cast.main.name.toLowerCase()] = player;
         }
         const _newCharacterMap = { ..._characterMap, ...newCharacterMap };
         const moods = Object.keys(
@@ -560,7 +555,6 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
                 imageSettings={config.imageSettings}
                 characterMap={characterMap}
                 speaker={currentSpeaker}
-                speakerName={scene.speaker ?? ""}
               />
               {voice && <audio autoPlay src={voice} ref={voiceRef} />}
             </Box>
