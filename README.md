@@ -12,6 +12,8 @@ Genshin Impact Doujin: https://genshin.chatvisualnovel.com/
 
 Ace Attorney Doujin: https://ace.chatvisualnovel.com/
 
+![Screenshot](https://chatvisualnovelassets.s3.us-west-2.amazonaws.com/images/screenshots/Screenshot+2023-03-27+at+09.51.31.png)
+
 Join us:
 
 [![Chat Server](https://img.shields.io/badge/chat-discord-7289da.svg)](https://discord.gg/FSWXq4DmEj)
