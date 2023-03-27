@@ -5,7 +5,7 @@
 
 演示: https://chatvisualnovel.com/
 
-原神同人（AI语音）: https://genshin.chatvisualnovel.com/
+原神同人（AI 语音）: https://genshin.chatvisualnovel.com/
 
 逆转裁判同人: https://ace.chatvisualnovel.com/
 
