@@ -33,7 +33,7 @@ export function SpeakerCard(props: SpeakerProps) {
               <img
                 key={characterName + "_" + mood}
                 src={image}
-                alt={props.speakerName}
+                alt={characterName}
                 style={{
                   position: "absolute",
                   zIndex: "-1",
