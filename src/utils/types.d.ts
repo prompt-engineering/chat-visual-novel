@@ -49,12 +49,19 @@ export type Speaker = {
 };
 
 export type TTS = {
-  method?: string;
+  method?: "GET" | "POST" | "HuggingFaceSpace";
   url: string;
+  ws?: {
+    url: string;
+    data?: string[];
+  };
   params?: {
     speaker: string;
     text: string;
     additionalParams?: string;
   };
-  voices?: string[];
+  voices: {
+    male: string[];
+    female: string[];
+  };
 };

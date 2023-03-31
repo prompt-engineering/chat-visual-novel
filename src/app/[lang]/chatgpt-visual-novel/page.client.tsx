@@ -30,11 +30,12 @@ import { BeatLoader } from "react-spinners";
 import { ClickPromptBird } from "@/components/ClickPrompt/ClickPromptButton";
 import VolumeIcon from "@/assets/icons/volume.svg?url";
 import Image from "next/image";
-import { Cast, Character, Config, KV, Scene, Speaker } from "@/configs/type";
+import { Cast, Character, Config, KV, Scene, Speaker } from "@/utils/types";
 import { SpeakerCard } from "@/components/Engine/SpeakerCard";
 import { NewStoryMenu } from "@/components/Engine/NewStoryMenu";
 import { MainMenu } from "@/components/Engine/MainMenu";
 import { LoadStoryMenu } from "@/components/Engine/LoadStoryMenu";
+import { generateVoice } from "@/utils/huggingface.space.util";
 
 function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   const dict = i18n.dict;
@@ -46,6 +47,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   let mainCharacterName: undefined | string;
   const otherCharacterNames: string[] = [];
   const _characterMap: KV<Character> = {};
+  const _voiceMap: KV<string> = {};
   if (config.characters && Object.keys(config.characters).length > 0) {
     const characters: { [key: string]: Character } = JSON.parse(
       JSON.stringify(config.characters)
@@ -60,6 +62,26 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
       _characterMap[_key.toLowerCase()] = character;
       if (_key.toLowerCase() in dict) {
         _characterMap[dict[_key.toLowerCase()].toLowerCase()] = character;
+      }
+      if (
+        config.tts &&
+        config.tts &&
+        (config.tts[locale] || config.tts["default"])
+      ) {
+        const ttsConfig = config.tts[locale] ?? config.tts["default"];
+        const voiceArray = [
+          ...ttsConfig.voices.male,
+          ...ttsConfig.voices.female,
+        ];
+        for (const i in voiceArray) {
+          if (voiceArray[i].indexOf(_key.toLowerCase()))
+            _voiceMap[_key.toLowerCase()] = voiceArray[i];
+          if (
+            _key.toLowerCase() in dict &&
+            voiceArray[i].indexOf(dict[_key.toLowerCase()])
+          )
+            _voiceMap[dict[_key.toLowerCase()]] = voiceArray[i];
+        }
       }
     }
   }
@@ -78,9 +100,11 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     }
   }
   const [characterMap, setCharacterMap] = useState(_characterMap);
+  const [voiceMap, setVoiceMap] = useState(_voiceMap);
   const [engineState, setEngineState] = useState("main_menu");
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogueLoading, setIsDialogueLoading] = useState(false);
+  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
   const [genre, setGenre] = useState(dict[genres[0]]);
   const [cast, setCast] = useState({} as Cast);
   const [scene, setScene] = useState({} as Scene);
@@ -169,34 +193,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   }, [scene, cast, characterMap, player]);
 
   const voiceRef = createRef<HTMLAudioElement>();
-  const voice: string | undefined = useMemo(() => {
-    if (
-      config &&
-      config.tts &&
-      locale in config.tts &&
-      (!config.tts[locale].method || config.tts[locale].method == "GET")
-    ) {
-      const _tts = config.tts[locale];
-      if (_tts.url && _tts.params && _tts.params.speaker && _tts.params.text) {
-        if (scene && scene.speaker && scene.dialogue && scene.dialogue.length) {
-          if (
-            _tts.voices &&
-            _tts.voices.indexOf(scene.speaker) == -1 &&
-            _tts.voices.indexOf(dict[scene.speaker.toLowerCase()]) == -1
-          ) {
-            return;
-          }
-          const _params = _tts.params;
-          const _voice = encodeURI(
-            `${_tts.url}?${_params.speaker}=${scene.speaker}&${_params.text}=${
-              scene.dialogue
-            }${_params.additionalParams ?? ""}`
-          );
-          return _voice;
-        }
-      }
-    }
-  }, [config.tts, scene.speaker, scene.dialogue, locale]);
+  const [voice, setVoice] = useState<string>();
 
   const handleGenreChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
     const _genre = genres.indexOf(e.target.value)
@@ -208,6 +205,147 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
 
   const updateConversationId = (id: number) => {
     setConversationId(id);
+  };
+
+  useEffect(() => {
+    if (
+      config &&
+      config.tts &&
+      (locale in config.tts || "default" in config.tts) &&
+      scene &&
+      scene.speaker &&
+      scene.dialogue &&
+      scene.dialogue.length &&
+      voiceMap &&
+      scene.speaker.toLowerCase() in voiceMap
+    ) {
+      setIsVoiceLoading(true);
+      setVoice(undefined);
+      const _tts = config.tts[locale] ?? config.tts["default"];
+      const _speaker = scene.speaker.toLowerCase();
+      if (_speaker in voiceMap) {
+        if (!_tts.method || _tts.method == "GET") {
+          if (
+            _tts.url &&
+            _tts.params &&
+            _tts.params.speaker &&
+            _tts.params.text
+          ) {
+            const _params = _tts.params;
+            const _voice = encodeURI(
+              `${_tts.url}?${_params.speaker}=${voiceMap[_speaker]}&${
+                _params.text
+              }=${scene.dialogue}${_params.additionalParams ?? ""}`
+            );
+            setVoice(_voice);
+            setIsVoiceLoading(false);
+          }
+        } else if (_tts.method == "HuggingFaceSpace") {
+          generateVoice(dict, locale, scene.dialogue, voiceMap[_speaker], _tts)
+            .then((voice) => {
+              setVoice(voice);
+              setIsVoiceLoading(false);
+            })
+            .catch((e) => {
+              console.log(e);
+              setIsVoiceLoading(false);
+            });
+        }
+      }
+    }
+  }, [scene.speaker, scene.dialogue, voiceMap, dict]);
+
+  const handleResponse = (
+    response: ResponseSend,
+    setLoading?: Dispatch<SetStateAction<boolean>>,
+    nextAction?: boolean
+  ) => {
+    try {
+      const result = response[0].content.trim();
+      const jsonRegex = /{.*}/s; // s flag for dot to match newline characters
+      const jsonMatch = result.match(jsonRegex);
+      let json = {};
+      if (jsonMatch) {
+        const jsonStr = jsonMatch[0].replaceAll(/\n|\r/g, "");
+        json = JSON.parse(jsonStr);
+      } else {
+        throw new Error("Invalid JSON returned.");
+      }
+      if ("main" in json && "others" in json) {
+        const cast = json as Cast;
+        const newCharacterMap: KV<Character> = {};
+        const newVoiceMap: KV<string> = {};
+        for (const _index in cast.others) {
+          const _name = cast.others[_index].name.toLowerCase();
+          if (
+            !(_name in _characterMap) &&
+            !(_name in newCharacterMap) &&
+            girls?.length
+          ) {
+            const _length = Object.keys(newCharacterMap).length;
+            if (_length < girls.length) {
+              newCharacterMap[_name] = girls[_length];
+            }
+          }
+          if (config.tts && (config.tts[locale] || config.tts["default"])) {
+            const _tts = config.tts[locale] ?? config.tts["default"];
+            if (
+              !(_name in _voiceMap) &&
+              !(_name in newVoiceMap) &&
+              _tts.voices &&
+              _tts.voices.female
+            ) {
+              const _length = Object.keys(newVoiceMap).length;
+              if (_length < _tts.voices.female.length) {
+                newVoiceMap[_name] = _tts.voices.female[_length];
+              }
+            }
+          }
+        }
+        if (!(cast.main.name.toLowerCase() in _characterMap) && player) {
+          newCharacterMap[cast.main.name.toLowerCase()] = player;
+          if (config.tts && (config.tts[locale] || config.tts["default"])) {
+            const _tts = config.tts[locale] ?? config.tts["default"];
+            if (_tts.voices && _tts.voices.male && _tts.voices.male.length)
+              newVoiceMap[cast.main.name.toLowerCase()] = _tts.voices.male[0];
+          }
+        }
+        setVoiceMap(newVoiceMap);
+        const _newCharacterMap = { ..._characterMap, ...newCharacterMap };
+        const moods = Object.keys(
+          _newCharacterMap[Object.keys(_newCharacterMap)[0]].images
+        );
+        setCharacterMap(_newCharacterMap);
+        setCast(cast);
+        const storyPrompt = `${dict["prompt_story_start"]}${genre}${
+          dict["prompt_after_story_genre"]
+        }\n{"speaker":string,"dialogue":string,"mood":string,"location":string,"answers":string[]}\n${
+          dict["prompt_after_story_format"]
+        }${JSON.stringify(moods)}\n${dict["prompt_places"]}${JSON.stringify(
+          _locationNames
+        )}\n${dict["prompt_end"].replaceAll("${player}", cast.main.name)}`;
+        if (nextAction)
+          setPromptQueue([...promptQueue, { prompt: storyPrompt, setLoading }]);
+      } else if (
+        "speaker" in json &&
+        "dialogue" in json &&
+        "mood" in json &&
+        "location" in json
+      ) {
+        const newScene = json as Scene;
+        setAnswer(undefined);
+        setScene(newScene);
+        setEngineState("story");
+      } else {
+        console.log(json);
+      }
+    } catch (e) {
+      console.log(response);
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+      setIsDialogueLoading(false);
+    }
   };
 
   const executePrompt = async (_prompt: {
@@ -239,77 +377,6 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
       }
     }
     if (_prompt.setLoading) _prompt.setLoading(false);
-  };
-
-  const handleResponse = (
-    response: ResponseSend,
-    setLoading?: Dispatch<SetStateAction<boolean>>,
-    nextAction?: boolean
-  ) => {
-    try {
-      const result = response[0].content.trim();
-      const jsonRegex = /{.*}/s; // s flag for dot to match newline characters
-      const jsonMatch = result.match(jsonRegex);
-      let json = {};
-      if (jsonMatch) {
-        json = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("Invalid JSON returned.");
-      }
-      if ("main" in json && "others" in json) {
-        const cast = json as Cast;
-        const newCharacterMap: KV<Character> = {};
-        for (const _index in cast.others) {
-          const _name = cast.others[_index].name.toLowerCase();
-          if (
-            !(_name in _characterMap) &&
-            !(_name in newCharacterMap) &&
-            girls?.length
-          ) {
-            const _length = Object.keys(newCharacterMap).length;
-            if (_length < girls.length) {
-              newCharacterMap[_name] = girls[_length];
-            }
-          }
-        }
-        if (!(cast.main.name.toLowerCase() in _characterMap) && player) {
-          newCharacterMap[cast.main.name.toLowerCase()] = player;
-        }
-        const _newCharacterMap = { ..._characterMap, ...newCharacterMap };
-        const moods = Object.keys(
-          _newCharacterMap[Object.keys(_newCharacterMap)[0]].images
-        );
-        setCharacterMap(_newCharacterMap);
-        setCast(cast);
-        const storyPrompt = `${dict["prompt_story_start"]}${genre}${
-          dict["prompt_after_story_genre"]
-        }\n{"speaker":string,"dialogue":string,"mood":string,"location":string,"answers":string[]}\n${
-          dict["prompt_after_story_format"]
-        }${JSON.stringify(moods)}\n${dict["prompt_places"]}${JSON.stringify(
-          _locationNames
-        )}\n${dict["prompt_end"]}`;
-        if (nextAction)
-          setPromptQueue([...promptQueue, { prompt: storyPrompt, setLoading }]);
-      } else if (
-        "speaker" in json &&
-        "dialogue" in json &&
-        "mood" in json &&
-        "location" in json
-      ) {
-        const newScene = json as Scene;
-        setAnswer(undefined);
-        setScene(newScene);
-        setEngineState("story");
-      } else {
-        console.log(json);
-      }
-    } catch (e) {
-      console.log(response);
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-      setIsDialogueLoading(false);
-    }
   };
 
   const handleDialogueLoadingStateChange = (_isLoading: boolean) => {
@@ -463,7 +530,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
                 </Box>
               )}
               {scene.dialogue}
-              {voice && (
+              {voice && !isVoiceLoading && (
                 <Text
                   style={{
                     position: "relative",
@@ -483,6 +550,15 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
                     }}
                   />
                 </Text>
+              )}
+              {isVoiceLoading && (
+                <BeatLoader
+                  style={{
+                    display: "inline",
+                    marginLeft: "0.5rem",
+                    filter: "invert(100%)",
+                  }}
+                />
               )}
               <VStack
                 paddingTop="1rem"

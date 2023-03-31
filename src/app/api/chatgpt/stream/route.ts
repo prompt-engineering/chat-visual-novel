@@ -4,9 +4,9 @@ import {
   createConversation,
   getAllChatsInsideConversation,
 } from "@/storage/planetscale";
-import { decryptKey } from "@/uitls/crypto.util";
-import { getChatClient } from "@/uitls/openapi.util";
-import { getUser, User } from "@/uitls/user.edge.util";
+import { decryptKey } from "@/utils/crypto.util";
+import { getChatClient } from "@/utils/openapi.util";
+import { getUser, User } from "@/utils/user.edge.util";
 import {
   ChatCompletionRequestMessage,
   ChatCompletionRequestMessageRoleEnum,

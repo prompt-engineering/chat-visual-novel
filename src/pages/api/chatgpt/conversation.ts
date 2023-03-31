@@ -1,5 +1,5 @@
 import { NextApiHandler } from "next";
-import { getUser } from "@/uitls/user.util";
+import { getUser } from "@/utils/user.util";
 import {
   changeConversationName,
   createConversation,

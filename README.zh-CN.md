@@ -86,12 +86,20 @@
   },
   "tts": {                      //（Optional）在线文字语音合成服务集成，目前仅支持GET。
     [key: string]: {                //（Required) 对应 i18n 地区，可以设一个 default。
-      "method": string,             //（Optional）GET或POST，默认为GET。
+      "method": string,             //（Optional）GET或POST（暂时不支持）或HuggingFaceSpace，默认为GET。
       "url": string,                //（Required）调用API的URL。
       "params": {                   //（Optional）URL参数对应，如果 method 为 GET 则必填。
         "speaker": string,          //（Required）speaker 对应的参数名。
         "text": string,             //（Required）text 对应的参数名。
         "additionalParams": string  //（Optional）附加参数值。
+      },
+      "ws": {                   //（Optional）如果 method 是 HuggingFaceSpace，则为必填项。
+        url: string;                //（Required）Hugging Face Space websocket 地址。
+        data: string[];             //（Optional）数组里的每一个标签将会被对应的值替换成为一个新数组作为最终数据传给 websocket。
+      },
+      "voices": {
+        male: string[];         //（Optional）所有男性声音名字的合集。
+        female: string[];       //（Optional）所有女性声音名字的合集。
       }
     }
   }

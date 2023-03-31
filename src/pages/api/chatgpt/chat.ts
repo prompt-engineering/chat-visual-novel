@@ -4,14 +4,14 @@ import type {
   CreateChatCompletionResponse,
 } from "openai";
 import type { OpenAIApi } from "openai";
-import { decryptKey } from "@/uitls/crypto.util";
+import { decryptKey } from "@/utils/crypto.util";
 import {
   createChat,
   getAllChatsInsideConversation,
   createConversation,
 } from "@/storage/planetscale";
-import { getChatClient } from "@/uitls/openapi.util";
-import { getUser } from "@/uitls/user.util";
+import { getChatClient } from "@/utils/openapi.util";
+import { getUser } from "@/utils/user.util";
 import { CHAT_COMPLETION_CONFIG } from "@/configs/constants";
 
 export type RequestSend = {

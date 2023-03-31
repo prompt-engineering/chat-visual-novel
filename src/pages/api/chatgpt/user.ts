@@ -1,7 +1,7 @@
 import { NextApiHandler } from "next";
 import { SITE_USER_COOKIE } from "@/configs/constants";
 import { createUser, isValidUser } from "@/storage/planetscale";
-import { encryptedKey, hashedKey } from "@/uitls/crypto.util";
+import { encryptedKey, hashedKey } from "@/utils/crypto.util";
 
 // type Request = {
 //   actions: "login" | "logout";

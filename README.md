@@ -90,12 +90,20 @@ With these steps completed, your ChatVisualNovel will be deployed on Vercel with
   },
   "tts": {                      //(Optional) Online Text-to-speach service integration. Only basic GET is supported for now.
     [key: string]: {                //(Required) i18n locale, can set a default.
-      "method": string,             //(Optional) GET or POST, defaults to GET.
+      "method": string,             //(Optional) GET or POST(not supported yet) or HuggingFaceSpace, defaults to GET.
       "url": string,                //(Required) API URL.
       "params": {                   //(Optional) URL query param map. Required when method is GET.
         "speaker": string,          //(Required) Query param name for speaker.
         "text": string,             //(Required) Query param name for text(dialogue).
         "additionalParams": string  //(Optional) Additional parameters as a string.
+      },
+      "ws": {                   //(Optional) When method is HuggingFaceSpace, this is required.
+        url: string;                //(Required) Hugging Face Space websocket URL.
+        data: string[];             //(Optional) Data payload schema. Each key name will be replaced by the corresponding value.
+      },
+      "voices": {
+        male: string[];         //(Optional) Collection of allowed male voice names.
+        female: string[];       //(Optional) Collection of allowed female voice names.
       }
     }
   }

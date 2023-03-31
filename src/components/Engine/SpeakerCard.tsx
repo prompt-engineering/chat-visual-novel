@@ -1,13 +1,14 @@
 "use client";
 
+import { KV, Character, Speaker } from "@/utils/types";
 import { CSSProperties, useMemo } from "react";
-import { KV, Character, Speaker } from "@/configs/type";
 
 export type SpeakerProps = {
   dict: Record<string, string>;
   imageSettings?: CSSProperties;
   characterMap: KV<Character>;
   speaker?: Speaker;
+  onLoaded?: () => {};
 };
 
 export function SpeakerCard(props: SpeakerProps) {
@@ -21,7 +22,19 @@ export function SpeakerCard(props: SpeakerProps) {
     });
     return _characters;
   }, [props.characterMap, props.dict]);
-
+  let loadedImages = 0;
+  function onImageLoad() {
+    loadedImages++;
+    const initialValue = 0;
+    const imageCount = Object.keys(characters).reduce(
+      (accumulator, key) =>
+        accumulator + Object.keys(characters[key].images).length,
+      initialValue
+    );
+    if (loadedImages >= imageCount) {
+      if (props.onLoaded) props.onLoaded();
+    }
+  }
   return (
     <>
       {characters &&
@@ -46,6 +59,7 @@ export function SpeakerCard(props: SpeakerProps) {
                       ? "block"
                       : "none",
                 }}
+                onLoad={onImageLoad}
               />
             );
           });

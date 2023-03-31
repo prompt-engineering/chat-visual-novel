@@ -65,5 +65,23 @@
     "bottom": "100%",
     "maxWidth": "70vw",
     "maxHeight": "70vh"
+  },
+  "tts": {
+    "default": {
+      "method": "HuggingFaceSpace",
+      "url": "https://plachta-vits-umamusume-voice-synthesizer.hf.space",
+      "ws": {
+        "url": "wss://plachta-vits-umamusume-voice-synthesizer.hf.space/queue/join",
+        "data": ["text", "voice", "localeLanguage", "speed", "phonemeInput"]
+      },
+      "voices": {
+        "male": ["重云 Chongyun (Genshin Impact)"],
+        "female": [
+          "甘雨 Ganyu (Genshin Impact)",
+          "宵宫 Yoimiya (Genshin Impact)",
+          "珊瑚宫心海 Sangonomiya Kokomi (Genshin Impact)"
+        ]
+      }
+    }
   }
 }
