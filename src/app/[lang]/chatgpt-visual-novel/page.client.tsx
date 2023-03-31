@@ -70,17 +70,19 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
       ) {
         const ttsConfig = config.tts[locale] ?? config.tts["default"];
         const voiceArray = [
-          ...ttsConfig.voices.male,
-          ...ttsConfig.voices.female,
+          ...(ttsConfig.voices.male ?? []),
+          ...(ttsConfig.voices.female ?? []),
         ];
         for (const i in voiceArray) {
-          if (voiceArray[i].indexOf(_key.toLowerCase()))
+          if (voiceArray[i].indexOf(_key.toLowerCase()) != -1)
             _voiceMap[_key.toLowerCase()] = voiceArray[i];
           if (
             _key.toLowerCase() in dict &&
-            voiceArray[i].indexOf(dict[_key.toLowerCase()])
-          )
+            voiceArray[i].indexOf(dict[_key.toLowerCase()]) != -1
+          ) {
+            _voiceMap[_key.toLowerCase()] = voiceArray[i];
             _voiceMap[dict[_key.toLowerCase()]] = voiceArray[i];
+          }
         }
       }
     }
@@ -310,7 +312,8 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
               newVoiceMap[cast.main.name.toLowerCase()] = _tts.voices.male[0];
           }
         }
-        setVoiceMap(newVoiceMap);
+        const _newVoiceMap = { ...voiceMap, ...newVoiceMap };
+        setVoiceMap(_newVoiceMap);
         const _newCharacterMap = { ..._characterMap, ...newCharacterMap };
         const moods = Object.keys(
           _newCharacterMap[Object.keys(_newCharacterMap)[0]].images

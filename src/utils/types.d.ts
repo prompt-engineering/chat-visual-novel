@@ -61,7 +61,7 @@ export type TTS = {
     additionalParams?: string;
   };
   voices: {
-    male: string[];
-    female: string[];
+    male?: string[];
+    female?: string[];
   };
 };
