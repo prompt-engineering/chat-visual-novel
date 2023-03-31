@@ -14,7 +14,9 @@ export type SpeakerProps = {
 export function SpeakerCard(props: SpeakerProps) {
   const characters = useMemo(() => {
     const uniqueNames = Object.keys(props.characterMap).filter(
-      (value) => (!(value.toLowerCase() in props.dict) || value.toLowerCase() == props.dict[value.toLowerCase()].toLowerCase())
+      (value) =>
+        !(value.toLowerCase() in props.dict) ||
+        value.toLowerCase() == props.dict[value.toLowerCase()].toLowerCase()
     );
     const _characters: KV<Character> = {};
     uniqueNames.map((key) => {
