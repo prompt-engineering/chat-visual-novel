@@ -20,6 +20,9 @@ export type MainMenuProps = {
   apiType: string;
   apiTypes: string[];
   handleApiTypeChange: ChangeEventHandler<HTMLSelectElement>;
+  mode: string;
+  modes: string[];
+  handleModeChange: ChangeEventHandler<HTMLSelectElement>;
   handleOnNewStory: MouseEventHandler<HTMLButtonElement>;
   handleOnContinueStory: MouseEventHandler<HTMLButtonElement>;
 };
@@ -37,7 +40,7 @@ export function MainMenu(props: MainMenuProps) {
       <CardHeader>
         <Heading size="md">{props.dict["title"]}</Heading>
       </CardHeader>
-      <CardBody maxH="320px" overflow="auto" minW="320px">
+      <CardBody maxH="400px" overflow="auto" minW="320px">
         <Heading size="xs">{props.dict["select_api_type"]}</Heading>
         <Text
           style={{
@@ -57,6 +60,31 @@ export function MainMenu(props: MainMenuProps) {
           {props.apiTypes.map((_apiType) => (
             <option key={_apiType} value={_apiType}>
               {upperFirst(props.dict[_apiType])}
+            </option>
+          ))}
+        </Select>
+        <Heading
+          size="xs"
+          style={{
+            marginTop: "1rem",
+          }}
+        >
+          {props.dict["select_mode"]}
+        </Heading>
+        <Text
+          style={{
+            fontSize: "0.8rem",
+            color: "grey",
+            whiteSpace: "pre-line",
+            marginTop: "0.5rem",
+          }}
+        >
+          {props.dict["select_mode_note"]}
+        </Text>
+        <Select mt={4} onChange={props.handleModeChange} value={props.mode}>
+          {props.modes.map((_mode) => (
+            <option key={_mode} value={_mode}>
+              {upperFirst(props.dict[_mode])}
             </option>
           ))}
         </Select>

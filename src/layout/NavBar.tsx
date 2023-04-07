@@ -36,66 +36,12 @@ export default async function NavBar({ locale }: { locale: string }) {
   ];
 
   return (
-    <Flex
-      align="center"
-      py="4"
-      pl="20px"
-      pr={{ md: "20px", base: "4px" }}
-      boxShadow="base"
-    >
-      <Flex>
+    <Flex align="center" py="4" pl="20px" pr={{ md: "20px", base: "4px" }}>
+      <Flex display={{ md: "block", base: "none" }}>
         <Heading size="md" mr={4}>
           <Link href={"/"}>ChatVisualNovel</Link>
         </Heading>
-        <Flex align="center" display={{ md: "flex", base: "none" }}>
-          {NavList.map((nav: any) => {
-            // 如果当前导航项有子菜单，则呈现为下拉菜单
-            if (nav?.children) {
-              return (
-                <Menu key={nav.title}>
-                  <MenuButton mr={4}>
-                    {nav.title}
-                    <ChevronDownIcon />
-                  </MenuButton>
-                  <MenuList>
-                    {nav.children.map((child: any) => (
-                      <MenuItem key={child.url} as={Link} href={child.url}>
-                        <Box
-                          mr={4}
-                          color={pathname === child.url ? "#108EE9" : "black"}
-                        >
-                          {child.title}
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </MenuList>
-                </Menu>
-              );
-            } else {
-              // 否则呈现为单独的链接
-              return (
-                <Link key={nav.url} href={nav.url}>
-                  <Box
-                    mr={4}
-                    color={pathname === nav.url ? "#108EE9" : "black"}
-                  >
-                    {nav.title}
-                  </Box>
-                </Link>
-              );
-            }
-          })}
-        </Flex>
       </Flex>
-      <Spacer />
-      <LocaleSwitcher locale={locale} />
-      <NavLink
-        display={{ md: "block", base: "none" }}
-        href={GITHUB_URL}
-        isExternal
-      >
-        GitHub <ExternalLinkIcon mx="2px" />
-      </NavLink>
       <Menu>
         <MenuButton
           as={IconButton}
@@ -105,27 +51,12 @@ export default async function NavBar({ locale }: { locale: string }) {
           display={{ md: "none", base: "block" }}
           mr={4}
         />
-        <MenuList display={{ md: "none", base: "block" }}>
-          {NavList.map((nav: any) =>
-            nav.children ? (
-              nav.children.map((child: any) => (
-                <MenuItem key={child.url} as={Link} href={child.url}>
-                  <Box
-                    mr={4}
-                    color={pathname === child.url ? "#108EE9" : "black"}
-                  >
-                    {child.title}
-                  </Box>
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem as={Link} href={nav.url} key={nav.url}>
-                <Box mr={4} color={pathname === nav.url ? "#108EE9" : "black"}>
-                  {nav.title}
-                </Box>
-              </MenuItem>
-            )
-          )}
+        <MenuList display={{ md: "none", base: "block" }} color={"black"}>
+          <MenuItem>
+            <Heading size="md">
+              <Link href={"/"}>ChatVisualNovel</Link>
+            </Heading>
+          </MenuItem>
           <MenuItem>
             <NavLink href={GITHUB_URL} isExternal>
               GitHub <ExternalLinkIcon mx="2px" />
@@ -133,6 +64,15 @@ export default async function NavBar({ locale }: { locale: string }) {
           </MenuItem>
         </MenuList>
       </Menu>
+      <Spacer />
+      <LocaleSwitcher locale={locale} />
+      <NavLink
+        display={{ md: "block", base: "none" }}
+        href={GITHUB_URL}
+        isExternal
+      >
+        GitHub <ExternalLinkIcon mx="2px" />
+      </NavLink>
     </Flex>
   );
 }

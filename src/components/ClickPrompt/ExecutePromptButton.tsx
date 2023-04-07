@@ -1,6 +1,15 @@
 "use client";
 
-import React, { MouseEventHandler, useEffect, useState } from "react";
+import React, {
+  createRef,
+  MouseEventHandler,
+  MutableRefObject,
+  ReactEventHandler,
+  RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Text, useDisclosure } from "@chakra-ui/react";
 import * as UserAPI from "@/api/user";
 import { ResponseCreateConversation } from "@/pages/api/chatgpt/conversation";
@@ -15,6 +24,7 @@ import { LoggingDrawer } from "@/components/ClickPrompt/LoggingDrawer";
 
 export type ExecButtonProps = {
   loading?: boolean;
+  disabled?: boolean;
   onClick?: MouseEventHandler;
   name: string;
   text: string;
@@ -26,12 +36,14 @@ export type ExecButtonProps = {
   conversationId?: number;
   updateConversationId?: (conversationId: number) => void;
   handleLoadingStateChange?: (isLoading: boolean) => void;
+  handleButtonRefChange?: (e: RefObject<HTMLButtonElement>) => void;
 };
 
 function ExecutePromptButton(props: ExecButtonProps) {
   const [isLoading, setIsLoading] = useState(props.loading);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [hasLogin, setHasLogin] = useState(false);
+  const btnRef = createRef<HTMLButtonElement>();
 
   const handleClick: MouseEventHandler<HTMLButtonElement> = async (e) => {
     if (props.onClick) {
@@ -111,6 +123,10 @@ function ExecutePromptButton(props: ExecButtonProps) {
     }
   };
 
+  useEffect(() => {
+    if (props.handleButtonRefChange) props.handleButtonRefChange(btnRef);
+  }, [btnRef.current]);
+
   return (
     <>
       <StyledPromptButton>
@@ -121,10 +137,14 @@ function ExecutePromptButton(props: ExecButtonProps) {
           whiteSpace="normal"
           height="auto"
           minHeight="2.5rem"
+          isDisabled={props.disabled || props.loading}
+          ref={btnRef}
         >
           {props.children}
           {!isLoading && (
-            <Text padding="0.5rem 0">{props.btnText ?? "Prompt"}</Text>
+            <Text padding="0.5rem 0" minWidth="2rem">
+              {props.btnText ?? "Prompt"}
+            </Text>
           )}
           {isLoading && <BeatLoader size={8} color="black" />}
         </Button>

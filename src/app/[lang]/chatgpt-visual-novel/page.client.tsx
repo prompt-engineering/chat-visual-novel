@@ -10,32 +10,22 @@ import {
   Dispatch,
   createRef,
 } from "react";
-import {
-  Box,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  Text,
-  Heading,
-  VStack,
-} from "@chakra-ui/react";
+import { Box, Text } from "@chakra-ui/react";
 import assets from "@/assets/assets.json";
-import { upperFirst } from "lodash-es";
-import ExecutePromptButton from "@/components/ClickPrompt/ExecutePromptButton";
 import { ResponseSend } from "@/pages/api/chatgpt/chat";
 import * as UserAPI from "@/api/user";
 import { sendMessage } from "@/api/chat";
-import { BeatLoader } from "react-spinners";
-import { ClickPromptBird } from "@/components/ClickPrompt/ClickPromptButton";
-import VolumeIcon from "@/assets/icons/volume.svg?url";
-import Image from "next/image";
 import { Cast, Character, Config, KV, Scene, Speaker } from "@/utils/types";
 import { SpeakerCard } from "@/components/Engine/SpeakerCard";
 import { NewStoryMenu } from "@/components/Engine/NewStoryMenu";
 import { MainMenu } from "@/components/Engine/MainMenu";
 import { LoadStoryMenu } from "@/components/Engine/LoadStoryMenu";
 import { generateVoice } from "@/utils/huggingface.space.util";
+import { Background } from "@/components/Engine/Background";
+import { LoadingCard } from "@/components/Engine/LoadingCard";
+import { InteractionCard } from "@/components/Engine/InteractionCard";
+import { DialogueCard } from "@/components/Engine/DialogueCard";
+import { parseResponse } from "@/utils/json.util";
 
 function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   const dict = i18n.dict;
@@ -88,7 +78,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     }
   }
   const _locationMap: KV<string> = {};
-  const _bgmMap: { [key: string]: string | undefined } = {};
+  const _bgmMap: KV<string | undefined> = {};
   const bgmRef = createRef<HTMLAudioElement>();
   const _locationNames: string[] = [];
   for (const _key in places) {
@@ -158,11 +148,27 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
       } else {
         window.sessionStorage.setItem("o:t", JSON.stringify(apiType));
       }
-    }, [window.sessionStorage["o:a"]]);
+    }, [window.sessionStorage["o:t"]]);
   }
   const handleApiTypeChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
     window.sessionStorage.setItem("o:t", JSON.stringify(e.target.value));
     setApiType(e.target.value);
+  };
+
+  const [mode, setMode] = useState("classic");
+  if (typeof window !== "undefined") {
+    useEffect(() => {
+      const _mode = window.sessionStorage.getItem("o:m");
+      if (_mode) {
+        setMode(JSON.parse(_mode));
+      } else {
+        window.sessionStorage.setItem("o:m", JSON.stringify(mode));
+      }
+    }, [window.sessionStorage["o:m"]]);
+  }
+  const handleModeChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
+    window.sessionStorage.setItem("o:m", JSON.stringify(e.target.value));
+    setMode(e.target.value);
   };
 
   const currentSpeaker: Speaker | undefined = useMemo(() => {
@@ -194,7 +200,6 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     }
   }, [scene, cast, characterMap, player]);
 
-  const voiceRef = createRef<HTMLAudioElement>();
   const [voice, setVoice] = useState<string>();
 
   const handleGenreChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
@@ -263,16 +268,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     nextAction?: boolean
   ) => {
     try {
-      const result = response[0].content.trim();
-      const jsonRegex = /{.*}/s; // s flag for dot to match newline characters
-      const jsonMatch = result.match(jsonRegex);
-      let json = {};
-      if (jsonMatch) {
-        const jsonStr = jsonMatch[0].replaceAll(/\n|\r/g, "");
-        json = JSON.parse(jsonStr);
-      } else {
-        throw new Error("Invalid JSON returned.");
-      }
+      const json = parseResponse(response[0].content);
       if ("main" in json && "others" in json) {
         const cast = json as Cast;
         const newCharacterMap: KV<Character> = {};
@@ -382,14 +378,6 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     if (_prompt.setLoading) _prompt.setLoading(false);
   };
 
-  const handleDialogueLoadingStateChange = (_isLoading: boolean) => {
-    setIsDialogueLoading(_isLoading);
-  };
-
-  const handleAnswerClick: MouseEventHandler<HTMLButtonElement> = (e: any) => {
-    setAnswer(e.target.innerText);
-  };
-
   const handleOnStart: MouseEventHandler<HTMLButtonElement> = (e: any) => {
     if (bgmRef && bgmRef.current && bgmRef.current.src) {
       bgmRef.current.play();
@@ -407,62 +395,15 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
         height: "100%",
       }}
     >
-      <Image
-        src={
-          scene &&
-          scene.location &&
-          scene.location.toLowerCase() in _locationMap
-            ? _locationMap[scene.location.toLowerCase()]
-            : places[Object.keys(places)[0]].image
-        }
-        alt={scene.location ?? ""}
-        style={{
-          position: "absolute",
-          left: "0",
-          bottom: "0",
-          minHeight: "100%",
-          minWidth: "100%",
-          objectFit: "cover",
-          zIndex: "-2",
-        }}
-        fill
-      />
-      <audio
-        loop
-        src={
-          scene && scene.location && scene.location.toLowerCase() in _bgmMap
-            ? _bgmMap[scene.location.toLowerCase()]
-            : places[Object.keys(places)[0]].bgm
-        }
-        ref={bgmRef}
+      <Background
+        scene={scene}
+        locationMap={_locationMap}
+        places={places}
+        bgmMap={_bgmMap}
+        bgmRef={bgmRef}
       />
       {isLoading ? (
-        <Card
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "300px",
-          }}
-        >
-          <ClickPromptBird />
-          <CardHeader textAlign="center">
-            <Heading size="md">{dict["loading"]}</Heading>
-          </CardHeader>
-          <CardBody>
-            <Text>
-              {dict["cast_prefix"]}
-              {cast.others.flatMap((val) => val.name).join(", ")}
-              {dict["and"]}
-              {cast.main.name}
-              {dict["cast_suffix"]}
-            </Text>
-          </CardBody>
-          <CardFooter>
-            <BeatLoader style={{ margin: "0 auto" }} />
-          </CardFooter>
-        </Card>
+        <LoadingCard dict={dict} cast={cast} />
       ) : (
         <>
           {engineState == "main_menu" && (
@@ -471,6 +412,9 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
               apiType={apiType}
               apiTypes={apiTypes}
               handleApiTypeChange={handleApiTypeChange}
+              mode={mode}
+              modes={config.modes}
+              handleModeChange={handleModeChange}
               handleOnNewStory={() => setEngineState("new_story")}
               handleOnContinueStory={() => setEngineState("continue_story")}
             />
@@ -513,110 +457,24 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
                 bottom: "0",
               }}
             >
-              {scene.speaker && (
-                <Box
-                  style={{
-                    borderRadius: "10px 10px 0 0",
-                    background: "rgba(0,128,128,0.8)",
-                    color: "white",
-                    fontSize: "1.2rem",
-                    fontWeight: "bold",
-                    textAlign: "center",
-                    padding: "0.4rem 1rem 0 1rem",
-                    height: "2.2rem",
-                    position: "absolute",
-                    left: "1rem",
-                    top: "-2.2rem",
-                  }}
-                >
-                  {upperFirst(scene.speaker)}
-                </Box>
-              )}
-              {scene.dialogue}
-              {voice && !isVoiceLoading && (
-                <Text
-                  style={{
-                    position: "relative",
-                    padding: "0 1rem",
-                    marginLeft: "0.5rem",
-                    cursor: "pointer",
-                    display: "inline",
-                    filter: "invert(100%)",
-                  }}
-                >
-                  <Image
-                    src={VolumeIcon}
-                    alt={scene.speaker}
-                    fill
-                    onClick={() => {
-                      voiceRef.current?.play();
-                    }}
-                  />
-                </Text>
-              )}
-              {isVoiceLoading && (
-                <BeatLoader
-                  style={{
-                    display: "inline",
-                    marginLeft: "0.5rem",
-                    filter: "invert(100%)",
-                  }}
-                />
-              )}
-              <VStack
-                paddingTop="1rem"
-                paddingRight="18px"
-                alignItems="end"
-                minH="60px"
-              >
-                {isDialogueLoading ? (
-                  <>
-                    {answer && <Box style={{ fontSize: "1rem" }}>{answer}</Box>}
-                    <BeatLoader color="white" />
-                  </>
-                ) : scene.answers && scene.answers.length > 0 ? (
-                  <>
-                    {scene.answers.map((_answer) => {
-                      return (
-                        <ExecutePromptButton
-                          key={_answer}
-                          loading={isDialogueLoading}
-                          text={
-                            dict["prompt_continue_with_answer"] +
-                            '"' +
-                            _answer +
-                            '"'
-                          }
-                          name="promptBtn"
-                          handleResponse={(response) =>
-                            handleResponse(response, setIsDialogueLoading)
-                          }
-                          conversationId={conversationId}
-                          updateConversationId={updateConversationId}
-                          btnText={_answer}
-                          handleLoadingStateChange={
-                            handleDialogueLoadingStateChange
-                          }
-                          onClick={handleAnswerClick}
-                        />
-                      );
-                    })}
-                  </>
-                ) : (
-                  <ExecutePromptButton
-                    loading={isDialogueLoading}
-                    text={dict["prompt_continue"]}
-                    name="promptBtn"
-                    handleResponse={(response) =>
-                      handleResponse(response, setIsDialogueLoading)
-                    }
-                    conversationId={conversationId}
-                    updateConversationId={updateConversationId}
-                    btnText={dict["continue"]}
-                    handleLoadingStateChange={handleDialogueLoadingStateChange}
-                  />
-                )}
-              </VStack>
+              <DialogueCard
+                scene={scene}
+                voice={voice}
+                isVoiceLoading={isVoiceLoading}
+              />
+              <InteractionCard
+                dict={dict}
+                mode={mode}
+                cast={cast}
+                scene={scene}
+                isDialogueLoading={isDialogueLoading}
+                setIsDialogueLoading={setIsDialogueLoading}
+                answer={answer}
+                setAnswer={setAnswer}
+                handleResponse={handleResponse}
+                conversationId={conversationId}
+                updateConversationId={updateConversationId}
+              />
               {"copyright_note" in dict && (
                 <Text
                   style={{
@@ -635,7 +493,6 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
                 characterMap={characterMap}
                 speaker={currentSpeaker}
               />
-              {voice && <audio autoPlay src={voice} ref={voiceRef} />}
             </Box>
           )}
         </>

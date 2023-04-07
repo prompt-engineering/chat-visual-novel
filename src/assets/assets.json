@@ -83,5 +83,6 @@
         ]
       }
     }
-  }
+  },
+  "modes": ["classic", "free"]
 }

@@ -5,6 +5,7 @@ import {
   MouseEventHandler,
   SetStateAction,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import {
@@ -17,15 +18,29 @@ import {
   Text,
   Button,
   Box,
+  VStack,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Spacer,
+  HStack,
 } from "@chakra-ui/react";
-import { ChevronLeftIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, DeleteIcon } from "@chakra-ui/icons";
 import { ResponseGetConversations } from "@/pages/api/chatgpt/conversation";
 import { LoggingDrawer } from "../ClickPrompt/LoggingDrawer";
-import { getConversations } from "@/api/conversation";
+import {
+  deleteAllConversations,
+  deleteConversation,
+  getConversations,
+} from "@/api/conversation";
 import { isLoggedIn } from "@/api/user";
 import { BeatLoader } from "react-spinners";
 import { getChatsByConversationId } from "@/api/chat";
 import { ResponseSend } from "@/pages/api/chatgpt/chat";
+import { parseResponse } from "@/utils/json.util";
 
 export type LoadStoryMenuProps = {
   dict: Record<string, string>;
@@ -49,6 +64,12 @@ export function LoadStoryMenu(props: LoadStoryMenuProps) {
   const [selectedConversation, setSelectedConversation] = useState<
     number | undefined
   >(undefined);
+  const {
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+    onClose: onDeleteClose,
+  } = useDisclosure();
+  const cancelRef = useRef(null);
 
   // get conversations
   useEffect(() => {
@@ -75,22 +96,25 @@ export function LoadStoryMenu(props: LoadStoryMenuProps) {
   useEffect(() => {
     if (hasLogin) {
       onClose();
-      (async () => {
-        try {
-          setIsLoading(true);
-          const data = (await getConversations()) ?? [];
-          data.sort((a, b) => (a.id && b.id ? b.id - a.id : !a.id ? 1 : -1));
-          setConversations(data);
-          // if (data.length) setSelectedConversation(data[0].id);
-        } catch (error) {
-          setConversations([]);
-          alert("Error: " + JSON.stringify(error));
-        } finally {
-          setIsLoading(false);
-        }
-      })();
+      loadStory();
     }
   }, [hasLogin]);
+
+  const loadStory = async () => {
+    try {
+      setSelectedConversation(undefined);
+      setIsLoading(true);
+      const data = (await getConversations()) ?? [];
+      data.sort((a, b) => (a.id && b.id ? b.id - a.id : !a.id ? 1 : -1));
+      setConversations(data);
+      // if (data.length) setSelectedConversation(data[0].id);
+    } catch (error) {
+      setConversations([]);
+      alert("Error: " + JSON.stringify(error));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleClose = () => {
     onClose();
@@ -111,41 +135,25 @@ export function LoadStoryMenu(props: LoadStoryMenuProps) {
         const data =
           (await getChatsByConversationId(selectedConversation)) ?? [];
         if (data.length > 1) {
-          const jsonRegex = /{.*}/s; // s flag for dot to match newline characters
-          const jsonMatch = data[1].content.match(jsonRegex);
-          let json = {};
-          if (jsonMatch) {
-            json = JSON.parse(jsonMatch[0]);
-            if ("main" in json && "others" in json) {
-              props.handleSetConversationId(selectedConversation);
-              props.handleResponse([data[1]], undefined, data.length < 4);
-            } else {
-              setIsLoading(false);
-              return;
-            }
+          const json = parseResponse(data[1].content);
+          if ("main" in json && "others" in json) {
+            props.handleSetConversationId(selectedConversation);
+            props.handleResponse([data[1]], undefined, data.length < 4);
           } else {
             setIsLoading(false);
             return;
           }
         }
         if (data.length > 3) {
-          const jsonRegex = /{.*}/s; // s flag for dot to match newline characters
-          const jsonMatch = data[data.length - 1].content.match(jsonRegex);
-          let json = {};
-          if (jsonMatch) {
-            json = JSON.parse(jsonMatch[0]);
-            if (
-              "speaker" in json &&
-              "dialogue" in json &&
-              "mood" in json &&
-              "location" in json
-            ) {
-              props.handleSetConversationId(selectedConversation);
-              props.handleResponse([data[data.length - 1]]);
-            } else {
-              setIsLoading(false);
-              return;
-            }
+          const json = parseResponse(data[data.length - 1].content);
+          if (
+            "speaker" in json &&
+            "dialogue" in json &&
+            "mood" in json &&
+            "location" in json
+          ) {
+            props.handleSetConversationId(selectedConversation);
+            props.handleResponse([data[data.length - 1]]);
           } else {
             setIsLoading(false);
             return;
@@ -155,6 +163,37 @@ export function LoadStoryMenu(props: LoadStoryMenuProps) {
         console.log(error);
       } finally {
         setIsLoading(false);
+      }
+    })();
+  };
+
+  const handleDeleteAll: MouseEventHandler<HTMLButtonElement> = (e) => {
+    setIsLoading(true);
+    (async () => {
+      try {
+        await deleteAllConversations();
+        await loadStory();
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+        onDeleteClose();
+      }
+    })();
+  };
+
+  const handleDelete: MouseEventHandler<HTMLButtonElement> = (e) => {
+    if (!selectedConversation) return;
+    setIsLoading(true);
+    (async () => {
+      try {
+        await deleteConversation(selectedConversation);
+        await loadStory();
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+        onDeleteClose();
       }
     })();
   };
@@ -203,20 +242,43 @@ export function LoadStoryMenu(props: LoadStoryMenuProps) {
                 }}
                 onClick={() => setSelectedConversation(conversation.id)}
               >
-                <Text
-                  style={{
-                    fontWeight: "bold",
-                  }}
-                >
-                  {conversation.name}
-                </Text>
-                {conversation.created_at && (
-                  <Text>
-                    {new Date(conversation.created_at).toLocaleString(
-                      props.locale
+                <HStack>
+                  <VStack
+                    style={{
+                      flexGrow: 1,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {conversation.name}
+                    </Text>
+                    {conversation.created_at && (
+                      <Text>
+                        {new Date(conversation.created_at).toLocaleString(
+                          props.locale
+                        )}
+                      </Text>
                     )}
-                  </Text>
-                )}
+                  </VStack>
+                  <Button
+                    style={{
+                      color: "white",
+                      backgroundColor: "red",
+                      height: "3rem",
+                      borderRadius: "50%",
+                    }}
+                    onClick={(e) => {
+                      setSelectedConversation(conversation.id);
+                      onDeleteOpen();
+                    }}
+                  >
+                    <DeleteIcon />
+                  </Button>
+                </HStack>
               </Card>
             ))
           ) : (
@@ -224,14 +286,31 @@ export function LoadStoryMenu(props: LoadStoryMenuProps) {
           )}
         </CardBody>
         <CardFooter>
-          <Button
-            colorScheme="teal"
-            width="100%"
-            isDisabled={isLoading || !hasLogin || !selectedConversation}
-            onClick={handleLoadStory}
-          >
-            {props.dict["load_story"]}
-          </Button>
+          <VStack width="100%">
+            <Button
+              width="100%"
+              colorScheme="teal"
+              isDisabled={isLoading || !hasLogin || !selectedConversation}
+              onClick={handleLoadStory}
+            >
+              {props.dict["load_story"]}
+            </Button>
+            <Button
+              width="100%"
+              isDisabled={
+                isLoading ||
+                !hasLogin ||
+                !conversations ||
+                !conversations.length
+              }
+              onClick={(e) => {
+                setSelectedConversation(undefined);
+                onDeleteOpen();
+              }}
+            >
+              {props.dict["delete_all_story"]}
+            </Button>
+          </VStack>
         </CardFooter>
       </Card>
       {!hasLogin &&
@@ -242,6 +321,48 @@ export function LoadStoryMenu(props: LoadStoryMenuProps) {
           { text: "" },
           updateLoginStatus
         )}
+      <AlertDialog
+        isOpen={isDeleteOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onDeleteClose}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              {selectedConversation
+                ? props.dict["delete_story"]
+                : props.dict["delete_all_story"]}
+            </AlertDialogHeader>
+            <AlertDialogBody>
+              {props.dict["action_confirmation"].replace(
+                "${action}",
+                selectedConversation
+                  ? props.dict["delete_story"]
+                  : props.dict["delete_all_story"]
+              )}
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onDeleteClose}>
+                {props.dict["cancel"]}
+              </Button>
+              <Button
+                colorScheme="red"
+                onClick={selectedConversation ? handleDelete : handleDeleteAll}
+                ml={3}
+                isDisabled={
+                  isLoading ||
+                  !hasLogin ||
+                  !conversations ||
+                  !conversations.length
+                }
+              >
+                {props.dict["confirm"]}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </>
   );
 }

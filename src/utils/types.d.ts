@@ -33,6 +33,7 @@ export type Location = {
 };
 
 export type Config = {
+  modes: string[];
   genres: string[];
   player?: Character;
   playerGender: string;
