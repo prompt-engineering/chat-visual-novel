@@ -1,4 +1,4 @@
-import { TTS } from "@/utils/types";
+import { KV, TTS } from "@/utils/types";
 
 function randomhash(length: number): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -14,9 +14,10 @@ export async function generateVoice(
   locale: string,
   text: string,
   voice: string,
-  tts: TTS
-): Promise<string | undefined> {
-  if (!tts.ws || !tts.ws.url || !tts.url) return undefined;
+  tts: TTS,
+  handleUpdate?: (text: string, state: string, socket: WebSocket) => boolean
+): Promise<{ text: string; voice?: string }> {
+  if (!tts.ws || !tts.ws.url || !tts.url) return { text };
   const hash = randomhash(12);
   const send_hash = {
     fn_index: 0,
@@ -48,19 +49,31 @@ export async function generateVoice(
     session_hash: hash,
   };
   const socket = new WebSocket(tts.ws?.url);
+  if (handleUpdate) handleUpdate(text, "create", socket);
   return new Promise((resolve, reject) => {
+    const _text = text;
     socket.onerror = (event: Event) => {
-      reject(new Error(`WebSocket error: ${event}`));
+      reject({
+        text: _text,
+        error: new Error(`WebSocket error: ${event}`),
+      });
+    };
+    socket.onclose = () => {
+      resolve({ text: _text });
     };
     socket.onmessage = async (event: MessageEvent) => {
       const data = JSON.parse(event.data);
+      if (handleUpdate) if (!handleUpdate(_text, data["msg"], socket)) return;
       if (data["msg"] === "send_hash") {
         socket.send(JSON.stringify(send_hash));
       } else if (data["msg"] === "send_data") {
         socket.send(JSON.stringify(payload));
       } else if (data["msg"] === "process_completed") {
         const result = tts.url + "/file=" + data["output"]["data"][1].name;
-        resolve(result);
+        resolve({
+          text: _text,
+          voice: result,
+        });
       }
     };
   });

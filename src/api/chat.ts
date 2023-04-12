@@ -37,13 +37,15 @@ export async function getChatsByConversationId(conversationId: number) {
 export async function sendMessage(
   conversationId: number,
   message: string,
-  name?: string
+  name?: string,
+  handleDelta?: (value: string, delta: string) => void
 ) {
   if (isClientSideOpenAI())
     return (await EdgeChat.sendMessage(
       conversationId,
       message,
-      name
+      name,
+      handleDelta
     )) as ResponseSend;
   const response = await nodeFetch("/api/chatgpt/chat", {
     method: "POST",

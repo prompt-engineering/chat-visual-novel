@@ -4,6 +4,7 @@ import {
 } from "@/configs/constants";
 import { ResponseGetChats, ResponseSend } from "@/pages/api/chatgpt/chat";
 import { WebStorage } from "@/storage/webstorage";
+import { CreateChatCompletionStreamResponse } from "@/utils/types";
 import {
   ChatCompletionRequestMessage,
   ChatCompletionResponseMessage,
@@ -44,7 +45,8 @@ export function saveChat(
 export async function sendMessage(
   conversationId: number,
   message: string,
-  name?: string
+  name?: string,
+  handleDelta?: (value: string, delta: string) => void
 ) {
   const messages = getChatsByConversationId(conversationId).map((it) => ({
     role: it.role,
@@ -69,18 +71,53 @@ export async function sendMessage(
       body: JSON.stringify({
         ...CHAT_COMPLETION_CONFIG,
         messages: messages,
+        stream: true,
       }),
     });
-    const json = await response.json();
     if (!response.ok) {
-      throw new Error(json);
+      throw new Error(await response.text());
     }
-    const { choices } = json as CreateChatCompletionResponse;
-    if (choices.length === 0 || !choices[0].message) {
-      throw new Error("No response from OpenAI");
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    const message: ChatCompletionResponseMessage = {
+      role: "assistant",
+      content: "",
+    };
+    while (reader) {
+      const { value, done } = await reader.read();
+      const data = decoder.decode(value).split("\n");
+      for (const lineIndex in data) {
+        const jsonStr = data[lineIndex].replace(/^data: /g, "").trim();
+        if (!jsonStr) continue;
+        if (jsonStr == "[DONE]") break;
+        let json: CreateChatCompletionStreamResponse | undefined = undefined;
+        try {
+          json = JSON.parse(jsonStr) as CreateChatCompletionStreamResponse;
+          if (
+            json &&
+            json.choices &&
+            json.choices.length &&
+            "delta" in json.choices[0] &&
+            json.choices[0].delta
+          ) {
+            if (json.choices[0].delta.role) {
+              message.role = json.choices[0].delta.role;
+            }
+            if (json.choices[0].delta.content) {
+              message.content += json.choices[0].delta.content;
+              if (handleDelta) {
+                handleDelta(message.content, json.choices[0].delta.content);
+              }
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      if (done) break;
     }
     saveChat(conversationId, _message);
-    return [saveChat(conversationId, choices[0].message)] as ResponseSend;
+    return [saveChat(conversationId, message)] as ResponseSend;
   } catch (e) {
     console.error(e);
   }

@@ -37,6 +37,7 @@ export type ExecButtonProps = {
   updateConversationId?: (conversationId: number) => void;
   handleLoadingStateChange?: (isLoading: boolean) => void;
   handleButtonRefChange?: (e: RefObject<HTMLButtonElement>) => void;
+  handleDelta?: (value: string, delta: string) => void;
 };
 
 function ExecutePromptButton(props: ExecButtonProps) {
@@ -88,7 +89,12 @@ function ExecutePromptButton(props: ExecButtonProps) {
 
     if (conversationId) {
       try {
-        const response: any = await sendMessage(conversationId, props.text);
+        const response: any = await sendMessage(
+          conversationId,
+          props.text,
+          undefined,
+          props.handleDelta
+        );
         if (response && props.handleResponse) {
           props.handleResponse(response as ResponseSend);
         }

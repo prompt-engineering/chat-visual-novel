@@ -18,8 +18,8 @@ export type InteractionProps = {
   mode: string;
   cast: Cast;
   scene: Scene;
-  isDialogueLoading: boolean;
-  setIsDialogueLoading: Dispatch<SetStateAction<boolean>>;
+  isAnswerLoading: boolean;
+  setIsAnswerLoading: Dispatch<SetStateAction<boolean>>;
   answer: string | undefined;
   setAnswer: Dispatch<SetStateAction<string | undefined>>;
   handleResponse: (
@@ -29,6 +29,7 @@ export type InteractionProps = {
   ) => void;
   conversationId: number | undefined;
   updateConversationId: (id: number) => void;
+  handleDelta?: (value: string, delta: string) => void;
 };
 
 export function InteractionCard(props: InteractionProps) {
@@ -37,21 +38,20 @@ export function InteractionCard(props: InteractionProps) {
     props.setAnswer(e.target.innerText);
   };
   const handleResponse = (response: ResponseSend) => {
-    return props.handleResponse(response, props.setIsDialogueLoading);
+    return props.handleResponse(response, props.setIsAnswerLoading);
   };
-  const handleDialogueLoadingStateChange = (_isLoading: boolean) => {
-    props.setIsDialogueLoading(_isLoading);
+  const handleAnswerLoadingStateChange = (_isLoading: boolean) => {
+    props.setIsAnswerLoading(_isLoading);
   };
   const handleButtonRefChange = (_btnRef: RefObject<HTMLButtonElement>) => {
     if (_btnRef && _btnRef.current) {
       setBtnRef(_btnRef.current);
-      console.log(_btnRef.current);
     }
   };
 
   return (
     <VStack paddingTop="1rem" paddingRight="18px" alignItems="end" minH="60px">
-      {props.isDialogueLoading ? (
+      {props.isAnswerLoading ? (
         <>
           {props.answer && (
             <Box style={{ fontSize: "1rem" }}>{props.answer}</Box>
@@ -65,7 +65,7 @@ export function InteractionCard(props: InteractionProps) {
               return (
                 <ExecutePromptButton
                   key={_answer}
-                  loading={props.isDialogueLoading}
+                  loading={props.isAnswerLoading}
                   text={
                     props.dict["prompt_continue_with_answer"] +
                     props.cast.main.name +
@@ -79,8 +79,9 @@ export function InteractionCard(props: InteractionProps) {
                   conversationId={props.conversationId}
                   updateConversationId={props.updateConversationId}
                   btnText={_answer}
-                  handleLoadingStateChange={handleDialogueLoadingStateChange}
+                  handleLoadingStateChange={handleAnswerLoadingStateChange}
                   onClick={handleAnswerClick}
+                  handleDelta={props.handleDelta}
                 />
               );
             })}
@@ -96,7 +97,7 @@ export function InteractionCard(props: InteractionProps) {
             />
             <ExecutePromptButton
               disabled={!props.answer}
-              loading={props.isDialogueLoading}
+              loading={props.isAnswerLoading}
               text={
                 props.dict["prompt_continue_with_answer"] +
                 props.cast.main.name +
@@ -110,21 +111,23 @@ export function InteractionCard(props: InteractionProps) {
               conversationId={props.conversationId}
               updateConversationId={props.updateConversationId}
               btnText={props.dict["continue"]}
-              handleLoadingStateChange={handleDialogueLoadingStateChange}
+              handleLoadingStateChange={handleAnswerLoadingStateChange}
               handleButtonRefChange={handleButtonRefChange}
+              handleDelta={props.handleDelta}
             />
           </HStack>
         )
       ) : (
         <ExecutePromptButton
-          loading={props.isDialogueLoading}
+          loading={props.isAnswerLoading}
           text={props.dict["prompt_continue"]}
           name="promptBtn"
           handleResponse={handleResponse}
           conversationId={props.conversationId}
           updateConversationId={props.updateConversationId}
           btnText={props.dict["continue"]}
-          handleLoadingStateChange={handleDialogueLoadingStateChange}
+          handleLoadingStateChange={handleAnswerLoadingStateChange}
+          handleDelta={props.handleDelta}
         />
       )}
     </VStack>

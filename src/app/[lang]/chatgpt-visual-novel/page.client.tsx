@@ -10,12 +10,20 @@ import {
   Dispatch,
   createRef,
 } from "react";
-import { Box, Text } from "@chakra-ui/react";
+import { Box, Progress, Text, useDisclosure, useToast } from "@chakra-ui/react";
 import assets from "@/assets/assets.json";
 import { ResponseSend } from "@/pages/api/chatgpt/chat";
 import * as UserAPI from "@/api/user";
 import { sendMessage } from "@/api/chat";
-import { Cast, Character, Config, KV, Scene, Speaker } from "@/utils/types";
+import {
+  Cast,
+  Character,
+  Config,
+  EngineState,
+  KV,
+  Scene,
+  Speaker,
+} from "@/utils/types";
 import { SpeakerCard } from "@/components/Engine/SpeakerCard";
 import { NewStoryMenu } from "@/components/Engine/NewStoryMenu";
 import { MainMenu } from "@/components/Engine/MainMenu";
@@ -25,9 +33,16 @@ import { Background } from "@/components/Engine/Background";
 import { LoadingCard } from "@/components/Engine/LoadingCard";
 import { InteractionCard } from "@/components/Engine/InteractionCard";
 import { DialogueCard } from "@/components/Engine/DialogueCard";
-import { parseResponse } from "@/utils/json.util";
+import { HistoryCard } from "@/components/Engine/HistoryCard";
+import {
+  buildCharacterMap,
+  buildLocationMap,
+  parseScene,
+} from "@/utils/content.util";
+import { DialogueMenu } from "@/components/Engine/DialogueMenu";
 
 function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
+  const toast = useToast();
   const dict = i18n.dict;
   const config = JSON.parse(JSON.stringify(assets)) as Config;
   const genres = config.genres;
@@ -38,65 +53,35 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   const otherCharacterNames: string[] = [];
   const _characterMap: KV<Character> = {};
   const _voiceMap: KV<string> = {};
-  if (config.characters && Object.keys(config.characters).length > 0) {
-    const characters: { [key: string]: Character } = JSON.parse(
-      JSON.stringify(config.characters)
-    );
-    for (const _key in characters) {
-      const character = characters[_key];
-      if (character.isPlayer) {
-        mainCharacterName = _key in dict ? dict[_key] : _key;
-      } else {
-        otherCharacterNames.push(_key in dict ? dict[_key] : _key);
-      }
-      _characterMap[_key.toLowerCase()] = character;
-      if (_key.toLowerCase() in dict) {
-        _characterMap[dict[_key.toLowerCase()].toLowerCase()] = character;
-      }
-      if (
-        config.tts &&
-        config.tts &&
-        (config.tts[locale] || config.tts["default"])
-      ) {
-        const ttsConfig = config.tts[locale] ?? config.tts["default"];
-        const voiceArray = [
-          ...(ttsConfig.voices.male ?? []),
-          ...(ttsConfig.voices.female ?? []),
-        ];
-        for (const i in voiceArray) {
-          if (voiceArray[i].indexOf(_key.toLowerCase()) != -1)
-            _voiceMap[_key.toLowerCase()] = voiceArray[i];
-          if (
-            _key.toLowerCase() in dict &&
-            voiceArray[i].indexOf(dict[_key.toLowerCase()]) != -1
-          ) {
-            _voiceMap[_key.toLowerCase()] = voiceArray[i];
-            _voiceMap[dict[_key.toLowerCase()]] = voiceArray[i];
-          }
-        }
-      }
-    }
-  }
+  buildCharacterMap(
+    dict,
+    locale,
+    config,
+    _characterMap,
+    _voiceMap,
+    otherCharacterNames,
+    mainCharacterName
+  );
   const _locationMap: KV<string> = {};
   const _bgmMap: KV<string | undefined> = {};
   const bgmRef = createRef<HTMLAudioElement>();
   const _locationNames: string[] = [];
-  for (const _key in places) {
-    _locationMap[_key.toLowerCase()] = places[_key].image;
-    if (_key.toLowerCase() in dict) {
-      _locationMap[dict[_key.toLowerCase()].toLowerCase()] = places[_key].image;
-      _bgmMap[dict[_key.toLowerCase()].toLowerCase()] = places[_key].bgm;
-      _locationNames.push(dict[_key.toLowerCase()]);
-    } else {
-      _locationNames.push(_key);
-    }
-  }
+  buildLocationMap(dict, places, _locationMap, _locationNames, _bgmMap);
   const [characterMap, setCharacterMap] = useState(_characterMap);
   const [voiceMap, setVoiceMap] = useState(_voiceMap);
-  const [engineState, setEngineState] = useState("main_menu");
+  const [engineState, setEngineState] = useState<EngineState>("main_menu");
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogueLoading, setIsDialogueLoading] = useState(false);
+  const [isAnswerLoading, setIsAnswerLoading] = useState(false);
   const [isVoiceLoading, setIsVoiceLoading] = useState(false);
+  const [loadedImageCount, setLoadedImageCount] = useState(0);
+  const [imageCount, setImageCount] = useState(0);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const {
+    isOpen: isHistoryOpen,
+    onOpen: onHistoryOpen,
+    onClose: onHistoryClose,
+  } = useDisclosure();
   const [genre, setGenre] = useState(dict[genres[0]]);
   const [cast, setCast] = useState({} as Cast);
   const [scene, setScene] = useState({} as Scene);
@@ -106,7 +91,7 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   const [promptQueue, setPromptQueue] = useState(
     [] as { prompt: string; setLoading?: Dispatch<SetStateAction<boolean>> }[]
   );
-  const getInitialPrompt = () => {
+  const prompt = useMemo(() => {
     const mainCharacterPrompt = `${
       mainCharacterName
         ? dict["prompt_main_character_named"] + mainCharacterName
@@ -125,9 +110,30 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
           dict["prompt_generate_girls_suffix"]
         : ""
     }`;
-    return `${mainCharacterPrompt}${otherCharacterPrompt}${dict["prompt_characters_json_prefix"]}\n{"main":{"name":""},"others":[{"name":""}]}\n${dict["prompt_characters_json_suffix"]}`;
-  };
-  const [prompt, setPrompt] = useState(getInitialPrompt());
+    const _prompt = `${dict["prompt_story_start"]}${genre}${
+      dict["prompt_after_story_genre"]
+    }
+${dict["prompt_after_story_format"]}${JSON.stringify(
+      Object.keys(_characterMap).length
+        ? Object.keys(_characterMap[Object.keys(_characterMap)[0]].images)
+        : Object.keys(config.player ? config.player.images : {})
+    )}
+${dict["prompt_places"]}${JSON.stringify(_locationNames)}
+${dict["prompt_end"]}
+${mainCharacterPrompt}${otherCharacterPrompt}${
+      dict["prompt_characters_json_prefix"]
+    }
+${dict["prompt_characters_json_suffix"]}`;
+    return _prompt;
+  }, [
+    dict,
+    _characterMap,
+    genre,
+    _locationNames,
+    mainCharacterName,
+    config,
+    otherCharacterNames,
+  ]);
   const [answer, setAnswer] = useState(undefined as string | undefined);
 
   useEffect(() => {
@@ -174,6 +180,9 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   const currentSpeaker: Speaker | undefined = useMemo(() => {
     if (!scene) return;
     if (!scene.speaker) return;
+    if (!scene.mood) return;
+    if (!cast.main) return;
+    if (!cast.others) return;
     const speaker = scene.speaker.toLowerCase();
     const mood = scene.mood.toLowerCase();
     if (speaker in characterMap)
@@ -201,17 +210,35 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
   }, [scene, cast, characterMap, player]);
 
   const [voice, setVoice] = useState<string>();
+  const [voiceSocket, setVoiceSocket] = useState<WebSocket | undefined>();
 
   const handleGenreChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
     const _genre = genres.indexOf(e.target.value)
       ? dict[e.target.value]
       : dict[genres[0]];
     setGenre(_genre);
-    setPrompt(getInitialPrompt());
   };
 
   const updateConversationId = (id: number) => {
     setConversationId(id);
+  };
+
+  const handleVoiceUpdate = (
+    text: string,
+    state: string,
+    socket: WebSocket
+  ) => {
+    setVoiceSocket(socket);
+    if (
+      !scene ||
+      !scene.dialogue ||
+      scene.dialogue != text ||
+      isDialogueLoading
+    ) {
+      if (socket) socket.close();
+      return false;
+    }
+    return true;
   };
 
   useEffect(() => {
@@ -224,10 +251,15 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
       scene.dialogue &&
       scene.dialogue.length &&
       voiceMap &&
-      scene.speaker.toLowerCase() in voiceMap
+      scene.speaker.toLowerCase() in voiceMap &&
+      !isDialogueLoading
     ) {
       setIsVoiceLoading(true);
       setVoice(undefined);
+      if (voiceSocket) {
+        voiceSocket.close();
+        setVoiceSocket(undefined);
+      }
       const _tts = config.tts[locale] ?? config.tts["default"];
       const _speaker = scene.speaker.toLowerCase();
       if (_speaker in voiceMap) {
@@ -248,103 +280,168 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
             setIsVoiceLoading(false);
           }
         } else if (_tts.method == "HuggingFaceSpace") {
-          generateVoice(dict, locale, scene.dialogue, voiceMap[_speaker], _tts)
-            .then((voice) => {
-              setVoice(voice);
-              setIsVoiceLoading(false);
+          generateVoice(
+            dict,
+            locale,
+            scene.dialogue,
+            voiceMap[_speaker],
+            _tts,
+            handleVoiceUpdate
+          )
+            .then(({ text, voice }) => {
+              if (text == scene.dialogue && voice) {
+                setVoice(voice);
+                setIsVoiceLoading(false);
+              }
             })
-            .catch((e) => {
-              console.log(e);
-              setIsVoiceLoading(false);
+            .catch(({ text, error }) => {
+              if (text == scene.dialogue) {
+                console.log(error);
+                setIsVoiceLoading(false);
+              }
             });
+        }
+      } else {
+        setIsVoiceLoading(false);
+      }
+    }
+  }, [scene.speaker, scene.dialogue, voiceMap, dict, isDialogueLoading]);
+
+  const handlePreparation = (
+    arrayMatch: RegExpMatchArray,
+    setLoading?: Dispatch<SetStateAction<boolean>>,
+    nextAction?: boolean
+  ) => {
+    const names: string[] = JSON.parse(arrayMatch[0].trim());
+    const cast: Cast = {
+      main: {
+        name: names[0],
+      },
+      others: [],
+    };
+    const newCharacterMap: KV<Character> = {};
+    const newVoiceMap: KV<string> = {};
+    for (let _index = 1; _index < names.length; _index++) {
+      cast.others.push({
+        name: names[_index],
+      });
+      const _name = cast.others[_index - 1].name.toLowerCase();
+      if (
+        !(_name in _characterMap) &&
+        !(_name in newCharacterMap) &&
+        girls?.length
+      ) {
+        const _length = Object.keys(newCharacterMap).length;
+        if (_length < girls.length) {
+          newCharacterMap[_name] = girls[_length];
+        }
+      }
+      if (config.tts && (config.tts[locale] || config.tts["default"])) {
+        const _tts = config.tts[locale] ?? config.tts["default"];
+        if (
+          !(_name in _voiceMap) &&
+          !(_name in newVoiceMap) &&
+          _tts.voices &&
+          _tts.voices.female
+        ) {
+          const _length = Object.keys(newVoiceMap).length;
+          if (_length < _tts.voices.female.length) {
+            newVoiceMap[_name] = _tts.voices.female[_length];
+          }
         }
       }
     }
-  }, [scene.speaker, scene.dialogue, voiceMap, dict]);
+    if (!(cast.main.name.toLowerCase() in _characterMap) && player) {
+      newCharacterMap[cast.main.name.toLowerCase()] = player;
+      if (config.tts && (config.tts[locale] || config.tts["default"])) {
+        const _tts = config.tts[locale] ?? config.tts["default"];
+        if (_tts.voices && _tts.voices.male && _tts.voices.male.length)
+          newVoiceMap[cast.main.name.toLowerCase()] = _tts.voices.male[0];
+      }
+    }
+    const _newVoiceMap = { ...voiceMap, ...newVoiceMap };
+    setVoiceMap(_newVoiceMap);
+    const _newCharacterMap = { ..._characterMap, ...newCharacterMap };
+    setCharacterMap(_newCharacterMap);
+    setCast(cast);
+    if (nextAction)
+      setPromptQueue([
+        ...promptQueue,
+        { prompt: dict["prompt_start_story"], setLoading },
+      ]);
+  };
+
+  const handleDialogue = (
+    content: string,
+    arrayMatch: RegExpMatchArray | null
+  ) => {
+    const {
+      scene: _scene,
+      _sceneDescription,
+      _sceneDialogue,
+    } = parseScene(content, scene, arrayMatch);
+    setAnswer(undefined);
+    setScene(_scene);
+    setEngineState("story");
+    if (_sceneDescription.length > 1) {
+      setIsLoading(false);
+    }
+    if (_sceneDialogue.length > 1) {
+      setIsDialogueLoading(false);
+    }
+  };
+
+  const handleContent = (
+    content: string,
+    setLoading?: Dispatch<SetStateAction<boolean>>,
+    nextAction?: boolean,
+    isDelta?: boolean
+  ) => {
+    try {
+      setIsVoiceLoading(true);
+      setIsDialogueLoading(true);
+      setIsAnswerLoading(true);
+      setVoice(undefined);
+      const _arrayMatch = content.trim().match(/\[.*\]/s);
+      if (content.indexOf("/") == -1 && _arrayMatch && !isDelta) {
+        handlePreparation(_arrayMatch, setLoading, nextAction);
+      } else if (content.indexOf("/") != -1) {
+        handleDialogue(content, _arrayMatch);
+      } else {
+        if (!isDelta)
+          toast({
+            title: content,
+            status: "error",
+            isClosable: true,
+          });
+      }
+    } catch (e) {
+      if (!isDelta)
+        toast({
+          title: content,
+          status: "error",
+          isClosable: true,
+        });
+      console.error(e);
+    } finally {
+      if (isDelta) return;
+      setIsDialogueLoading(false);
+      setIsAnswerLoading(false);
+      setIsLoading(false);
+    }
+  };
 
   const handleResponse = (
     response: ResponseSend,
     setLoading?: Dispatch<SetStateAction<boolean>>,
-    nextAction?: boolean
+    nextAction?: boolean,
+    isDelta?: boolean
   ) => {
-    try {
-      const json = parseResponse(response[0].content);
-      if ("main" in json && "others" in json) {
-        const cast = json as Cast;
-        const newCharacterMap: KV<Character> = {};
-        const newVoiceMap: KV<string> = {};
-        for (const _index in cast.others) {
-          const _name = cast.others[_index].name.toLowerCase();
-          if (
-            !(_name in _characterMap) &&
-            !(_name in newCharacterMap) &&
-            girls?.length
-          ) {
-            const _length = Object.keys(newCharacterMap).length;
-            if (_length < girls.length) {
-              newCharacterMap[_name] = girls[_length];
-            }
-          }
-          if (config.tts && (config.tts[locale] || config.tts["default"])) {
-            const _tts = config.tts[locale] ?? config.tts["default"];
-            if (
-              !(_name in _voiceMap) &&
-              !(_name in newVoiceMap) &&
-              _tts.voices &&
-              _tts.voices.female
-            ) {
-              const _length = Object.keys(newVoiceMap).length;
-              if (_length < _tts.voices.female.length) {
-                newVoiceMap[_name] = _tts.voices.female[_length];
-              }
-            }
-          }
-        }
-        if (!(cast.main.name.toLowerCase() in _characterMap) && player) {
-          newCharacterMap[cast.main.name.toLowerCase()] = player;
-          if (config.tts && (config.tts[locale] || config.tts["default"])) {
-            const _tts = config.tts[locale] ?? config.tts["default"];
-            if (_tts.voices && _tts.voices.male && _tts.voices.male.length)
-              newVoiceMap[cast.main.name.toLowerCase()] = _tts.voices.male[0];
-          }
-        }
-        const _newVoiceMap = { ...voiceMap, ...newVoiceMap };
-        setVoiceMap(_newVoiceMap);
-        const _newCharacterMap = { ..._characterMap, ...newCharacterMap };
-        const moods = Object.keys(
-          _newCharacterMap[Object.keys(_newCharacterMap)[0]].images
-        );
-        setCharacterMap(_newCharacterMap);
-        setCast(cast);
-        const storyPrompt = `${dict["prompt_story_start"]}${genre}${
-          dict["prompt_after_story_genre"]
-        }\n{"speaker":string,"dialogue":string,"mood":string,"location":string,"answers":string[]}\n${
-          dict["prompt_after_story_format"]
-        }${JSON.stringify(moods)}\n${dict["prompt_places"]}${JSON.stringify(
-          _locationNames
-        )}\n${dict["prompt_end"].replaceAll("${player}", cast.main.name)}`;
-        if (nextAction)
-          setPromptQueue([...promptQueue, { prompt: storyPrompt, setLoading }]);
-      } else if (
-        "speaker" in json &&
-        "dialogue" in json &&
-        "mood" in json &&
-        "location" in json
-      ) {
-        const newScene = json as Scene;
-        setAnswer(undefined);
-        setScene(newScene);
-        setEngineState("story");
-      } else {
-        console.log(json);
-      }
-    } catch (e) {
-      console.log(response);
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-      setIsDialogueLoading(false);
-    }
+    handleContent(response[0].content, setLoading, nextAction, isDelta);
+  };
+
+  const handleDelta = (content: string) => {
+    handleContent(content, undefined, false, true);
   };
 
   const executePrompt = async (_prompt: {
@@ -366,7 +463,9 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
       try {
         const response: ResponseSend = (await sendMessage(
           conversationId,
-          _prompt.prompt
+          _prompt.prompt,
+          undefined,
+          handleDelta
         )) as ResponseSend;
         if (response) {
           handleResponse(response, _prompt.setLoading);
@@ -378,11 +477,25 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
     if (_prompt.setLoading) _prompt.setLoading(false);
   };
 
-  const handleOnStart: MouseEventHandler<HTMLButtonElement> = (e: any) => {
+  const handleOnStart: MouseEventHandler<HTMLButtonElement> = () => {
     if (bgmRef && bgmRef.current && bgmRef.current.src) {
       bgmRef.current.play();
       bgmRef.current.volume = 0.4;
     }
+  };
+
+  const handleImageLoaded = (count: number, total: number) => {
+    if (imageCount != total) setImageCount(total);
+    if (loadedImageCount != count) setLoadedImageCount(count);
+    if (count >= total) setIsImageLoading(false);
+  };
+
+  const handleReturnToMainMenu = () => {
+    if (voiceSocket) {
+      voiceSocket.close();
+      setVoiceSocket(undefined);
+    }
+    setEngineState("main_menu");
   };
 
   return (
@@ -402,9 +515,10 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
         bgmMap={_bgmMap}
         bgmRef={bgmRef}
       />
-      {isLoading ? (
-        <LoadingCard dict={dict} cast={cast} />
-      ) : (
+      {(isLoading || isImageLoading) && (
+        <LoadingCard dict={dict} cast={cast} isLoading={isLoading} />
+      )}
+      {!isLoading && !isImageLoading && (
         <>
           {engineState == "main_menu" && (
             <MainMenu
@@ -443,59 +557,99 @@ function ChatGptVisualNovel({ i18n, locale }: GeneralI18nProps) {
               handleReturn={() => setEngineState("main_menu")}
             />
           )}
-          {engineState == "story" && scene && scene.speaker && (
-            <Box
-              style={{
-                borderRadius: "10px 10px 0 0",
-                background: "rgba(0,128,128,0.8)",
-                color: "white",
-                fontSize: "1.2rem",
-                padding: "1rem",
-                width: "100%",
-                position: "absolute",
-                left: "0",
-                bottom: "0",
-              }}
-            >
-              <DialogueCard
-                scene={scene}
-                voice={voice}
-                isVoiceLoading={isVoiceLoading}
-              />
-              <InteractionCard
-                dict={dict}
-                mode={mode}
-                cast={cast}
-                scene={scene}
-                isDialogueLoading={isDialogueLoading}
-                setIsDialogueLoading={setIsDialogueLoading}
-                answer={answer}
-                setAnswer={setAnswer}
-                handleResponse={handleResponse}
-                conversationId={conversationId}
-                updateConversationId={updateConversationId}
-              />
-              {"copyright_note" in dict && (
-                <Text
-                  style={{
-                    fontSize: "0.5rem",
-                    color: "lightgray",
-                    paddingTop: "0.5rem",
-                    whiteSpace: "pre-line",
-                  }}
-                >
-                  {dict["copyright_note"]}
-                </Text>
-              )}
-              <SpeakerCard
-                dict={dict}
-                imageSettings={config.imageSettings}
-                characterMap={characterMap}
-                speaker={currentSpeaker}
-              />
-            </Box>
-          )}
         </>
+      )}
+      <Box
+        style={{
+          borderRadius: "10px 10px 0 0",
+          background: "rgba(0,128,128,0.8)",
+          color: "white",
+          fontSize: "1.2rem",
+          padding: "1rem",
+          width: "100%",
+          position: "absolute",
+          left: "0",
+          bottom: "0",
+          display:
+            engineState == "story" &&
+            scene &&
+            scene.speaker &&
+            !isLoading &&
+            !isImageLoading
+              ? "block"
+              : "none",
+        }}
+      >
+        {engineState == "story" &&
+          scene &&
+          scene.speaker &&
+          !isImageLoading &&
+          !isLoading && (
+            <DialogueCard
+              scene={scene}
+              voice={voice}
+              isVoiceLoading={isVoiceLoading}
+            />
+          )}
+        <InteractionCard
+          dict={dict}
+          mode={mode}
+          cast={cast}
+          scene={scene}
+          isAnswerLoading={isAnswerLoading}
+          setIsAnswerLoading={setIsAnswerLoading}
+          answer={answer}
+          setAnswer={setAnswer}
+          handleResponse={handleResponse}
+          conversationId={conversationId}
+          updateConversationId={updateConversationId}
+          handleDelta={handleDelta}
+        />
+        {"copyright_note" in dict && (
+          <Text
+            style={{
+              fontSize: "0.5rem",
+              color: "lightgray",
+              paddingTop: "0.5rem",
+              whiteSpace: "pre-line",
+            }}
+          >
+            {dict["copyright_note"]}
+          </Text>
+        )}
+        <SpeakerCard
+          dict={dict}
+          config={config}
+          characterMap={characterMap}
+          speaker={currentSpeaker}
+          onLoaded={handleImageLoaded}
+        />
+        <DialogueMenu
+          dict={dict}
+          onHistoryOpen={onHistoryOpen}
+          onReturnToMainMenu={handleReturnToMainMenu}
+        />
+      </Box>
+      {isImageLoading && imageCount > 0 && (
+        <Progress
+          value={(loadedImageCount / imageCount) * 100}
+          size="xs"
+          colorScheme="teal"
+          style={{
+            position: "fixed",
+            bottom: "0",
+            width: "100vw",
+          }}
+        />
+      )}
+      {conversationId && cast && cast.main && (
+        <HistoryCard
+          dict={dict}
+          conversationId={conversationId}
+          cast={cast}
+          handleClose={onHistoryClose}
+          isOpen={isHistoryOpen}
+        />
       )}
     </Box>
   );

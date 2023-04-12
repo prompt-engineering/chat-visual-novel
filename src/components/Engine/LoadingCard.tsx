@@ -15,6 +15,7 @@ import { ClickPromptBird } from "../ClickPrompt/ClickPromptButton";
 export type LoadingCardProps = {
   dict: Record<string, string>;
   cast: Cast;
+  isLoading: boolean | undefined;
 };
 
 export function LoadingCard(props: LoadingCardProps) {
@@ -30,17 +31,27 @@ export function LoadingCard(props: LoadingCardProps) {
     >
       <ClickPromptBird />
       <CardHeader textAlign="center">
-        <Heading size="md">{props.dict["loading"]}</Heading>
+        <Heading size="md">
+          {props.isLoading
+            ? props.dict["loading"]
+            : props.dict["loading_assets"]}
+        </Heading>
       </CardHeader>
-      <CardBody>
-        <Text>
-          {props.dict["cast_prefix"]}
-          {props.cast.others.flatMap((val) => val.name).join(", ")}
-          {props.dict["and"]}
-          {props.cast.main.name}
-          {props.dict["cast_suffix"]}
-        </Text>
-      </CardBody>
+      {props.dict &&
+        props.cast &&
+        props.cast.main &&
+        props.cast.others &&
+        props.cast.others.length && (
+          <CardBody>
+            <Text>
+              {props.dict["cast_prefix"]}
+              {props.cast.others.flatMap((val) => val.name).join(", ")}
+              {props.dict["and"]}
+              {props.cast.main.name}
+              {props.dict["cast_suffix"]}
+            </Text>
+          </CardBody>
+        )}
       <CardFooter>
         <BeatLoader style={{ margin: "0 auto" }} />
       </CardFooter>

@@ -12,5 +12,5 @@ export const CHAT_COMPLETION_URL = "https://api.openai.com/v1/chat/completions";
 export const CHAT_COMPLETION_CONFIG = {
   model: "gpt-3.5-turbo",
   temperature: 0.5,
-  max_tokens: 512,
+  max_tokens: 150,
 };

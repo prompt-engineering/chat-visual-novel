@@ -29,10 +29,10 @@ export function DialogueCard(props: DialogueCardProps) {
             fontWeight: "bold",
             textAlign: "center",
             padding: "0.4rem 1rem 0 1rem",
-            height: "2.2rem",
+            height: "2.4rem",
             position: "absolute",
             left: "1rem",
-            top: "-2.2rem",
+            top: "-2.4rem",
           }}
         >
           {upperFirst(props.scene.speaker)}

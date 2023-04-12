@@ -1,3 +1,4 @@
+import { ChatCompletionResponseMessageRoleEnum } from "openai";
 import { CSSProperties } from "react";
 
 export type Scene = {
@@ -66,3 +67,96 @@ export type TTS = {
     female?: string[];
   };
 };
+
+export type EngineState =
+  | "main_menu"
+  | "new_story"
+  | "continue_story"
+  | "story";
+
+/**
+ *
+ * @export
+ * @interface CreateChatCompletionStreamResponse
+ */
+export interface CreateChatCompletionStreamResponse {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateChatCompletionStreamResponse
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateChatCompletionStreamResponse
+   */
+  object: string;
+  /**
+   *
+   * @type {number}
+   * @memberof CreateChatCompletionStreamResponse
+   */
+  created: number;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateChatCompletionStreamResponse
+   */
+  model: string;
+  /**
+   *
+   * @type {Array<CreateChatCompletionStreamResponseChoicesInner>}
+   * @memberof CreateChatCompletionStreamResponse
+   */
+  choices: Array<CreateChatCompletionStreamResponseChoicesInner>;
+  /**
+   *
+   * @type {CreateCompletionStreamResponseUsage}
+   * @memberof CreateChatCompletionStreamResponse
+   */
+  usage?: CreateCompletionStreamResponseUsage;
+}
+/**
+ *
+ * @export
+ * @interface CreateChatCompletionStreamResponseChoicesInner
+ */
+export interface CreateChatCompletionStreamResponseChoicesInner {
+  /**
+   *
+   * @type {number}
+   * @memberof CreateChatCompletionStreamResponseChoicesInner
+   */
+  index?: number;
+  /**
+   *
+   * @type {ChatCompletionStreamResponseMessage}
+   * @memberof CreateChatCompletionStreamResponseChoicesInner
+   */
+  delta?: ChatCompletionStreamResponseMessage;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateChatCompletionStreamResponseChoicesInner
+   */
+  finish_reason?: string | null;
+}
+
+/**
+ *
+ * @export
+ * @interface ChatCompletionStreamResponseMessage
+ */
+export interface ChatCompletionStreamResponseMessage {
+  /**
+   * @type {ChatCompletionResponseMessageRoleEnum}
+   * @memberof ChatCompletionStreamResponseMessage
+   */
+  role?: ChatCompletionResponseMessageRoleEnum;
+  /**
+   * @type {string}
+   * @memberof ChatCompletionStreamResponseMessage
+   */
+  content?: string;
+}

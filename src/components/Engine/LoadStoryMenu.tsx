@@ -25,7 +25,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
-  Spacer,
   HStack,
 } from "@chakra-ui/react";
 import { ChevronLeftIcon, DeleteIcon } from "@chakra-ui/icons";
@@ -40,7 +39,6 @@ import { isLoggedIn } from "@/api/user";
 import { BeatLoader } from "react-spinners";
 import { getChatsByConversationId } from "@/api/chat";
 import { ResponseSend } from "@/pages/api/chatgpt/chat";
-import { parseResponse } from "@/utils/json.util";
 
 export type LoadStoryMenuProps = {
   dict: Record<string, string>;
@@ -48,7 +46,9 @@ export type LoadStoryMenuProps = {
   handleResponse: (
     response: ResponseSend,
     setLoading?: Dispatch<SetStateAction<boolean>>,
-    nextAction?: boolean
+    nextAction?: boolean,
+    isDelta?: boolean,
+    forceStart?: boolean
   ) => void;
   handleReturn: MouseEventHandler<HTMLHeadingElement>;
   handleSetConversationId: Dispatch<SetStateAction<number | undefined>>;
@@ -107,7 +107,7 @@ export function LoadStoryMenu(props: LoadStoryMenuProps) {
       const data = (await getConversations()) ?? [];
       data.sort((a, b) => (a.id && b.id ? b.id - a.id : !a.id ? 1 : -1));
       setConversations(data);
-      // if (data.length) setSelectedConversation(data[0].id);
+      if (data.length) setSelectedConversation(data[0].id);
     } catch (error) {
       setConversations([]);
       alert("Error: " + JSON.stringify(error));
@@ -135,29 +135,24 @@ export function LoadStoryMenu(props: LoadStoryMenuProps) {
         const data =
           (await getChatsByConversationId(selectedConversation)) ?? [];
         if (data.length > 1) {
-          const json = parseResponse(data[1].content);
-          if ("main" in json && "others" in json) {
-            props.handleSetConversationId(selectedConversation);
-            props.handleResponse([data[1]], undefined, data.length < 4);
-          } else {
-            setIsLoading(false);
-            return;
-          }
+          props.handleSetConversationId(selectedConversation);
+          props.handleResponse(
+            [data[1]],
+            undefined,
+            data.length < 4,
+            undefined,
+            true
+          );
         }
         if (data.length > 3) {
-          const json = parseResponse(data[data.length - 1].content);
-          if (
-            "speaker" in json &&
-            "dialogue" in json &&
-            "mood" in json &&
-            "location" in json
-          ) {
-            props.handleSetConversationId(selectedConversation);
-            props.handleResponse([data[data.length - 1]]);
-          } else {
-            setIsLoading(false);
-            return;
-          }
+          props.handleSetConversationId(selectedConversation);
+          props.handleResponse(
+            [data[data.length - 1]],
+            undefined,
+            undefined,
+            undefined,
+            true
+          );
         }
       } catch (error) {
         console.log(error);
